@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta Cardigan</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --green:#0f8a4a; --red:#d6283b; --black:#1a1d22;
+    --gold:#e8c060; --gold-2:#f4dd9a; --bg0:#0b0f1a;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1f2a44 0%, transparent 60%),
+      linear-gradient(160deg,#0b0f1a 0%, #10152400 40%, #0b0f1a 100%),
+      var(--bg0);
+    color:#eef1f7; min-height:100vh; overflow-x:hidden;
+    display:flex; flex-direction:column;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:linear-gradient(180deg,rgba(20,26,43,.9),rgba(11,15,26,.6));
+    border-bottom:1px solid rgba(232,192,96,.25); backdrop-filter:blur(8px);
+    position:sticky; top:0; z-index:5;
+  }
+  .brand{display:flex; align-items:center; gap:9px; font-weight:800; letter-spacing:.5px; font-size:17px;}
+  .brand .dot{width:26px;height:26px;border-radius:50%;
+    background:conic-gradient(var(--red) 0 25%, var(--black) 0 50%, var(--red) 0 75%, var(--black) 0);
+    box-shadow:0 0 0 2px var(--gold), 0 3px 10px rgba(0,0,0,.5); position:relative;}
+  .brand .dot::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--gold);}
+  .brand span{background:linear-gradient(180deg,var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .balance{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;}
+  .balance .lbl{font-size:10px;color:#9aa6bd;text-transform:uppercase;letter-spacing:1px;}
+  .balance .amt{font-size:17px;font-weight:800;color:var(--gold-2);}
+
+  .stage{display:flex;justify-content:center;align-items:center;padding:22px 0 6px;position:relative;height:270px;}
+  .wheel-glow{position:absolute;width:250px;height:250px;border-radius:50%;
+    background:radial-gradient(circle, rgba(232,192,96,.20), transparent 70%);filter:blur(6px);}
+  .wheel-outer{position:relative;width:240px;height:240px;}
+  .rim{position:absolute;inset:0;border-radius:50%;
+    box-shadow:0 0 0 6px #2a1c07, 0 0 0 10px var(--gold), 0 14px 40px rgba(0,0,0,.65);}
+  .wheel{width:240px;height:240px;border-radius:50%;position:absolute;inset:0;
+    background:#111; box-shadow:inset 0 0 26px rgba(0,0,0,.7);}
+  .wheel .num{position:absolute;top:50%;left:50%;width:50%;height:22px;
+    transform-origin:0 50%;font-size:9px;font-weight:700;color:#fff;
+    display:flex;align-items:center;justify-content:flex-end;padding-right:9px;}
+  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:96px;height:96px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#39415a,#161a24 60%,#0a0d14);
+    box-shadow:inset 0 0 18px rgba(0,0,0,.8), 0 0 0 3px var(--gold);
+    display:flex;align-items:center;justify-content:center;z-index:2;}
+  .hub .g{width:54px;height:54px;border-radius:50%;
+    background:conic-gradient(from 0deg,var(--gold),#a8792a,var(--gold-2),#8a6420,var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.6),inset 0 0 8px rgba(255,255,255,.3);}
+  .hub .g b{font-size:20px;color:#2a1c07;}
+  .ball-track{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:200px;height:200px;z-index:3;pointer-events:none;}
+  .ball{position:absolute;top:50%;left:50%;width:13px;height:13px;border-radius:50%;
+    margin:-6.5px 0 0 -6.5px;
+    background:radial-gradient(circle at 35% 30%,#fff,#c9cfda 70%,#8a92a3);
+    box-shadow:0 2px 5px rgba(0,0,0,.6), inset 0 0 3px rgba(255,255,255,.9);
+    transform-origin:6.5px 6.5px;}
+  .pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);
+    width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
+    border-top:20px solid var(--gold-2);z-index:4;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));}
+
+  .result-chip{display:flex;justify-content:center;gap:8px;margin:6px 0 2px;align-items:center;min-height:48px;}
+  .result-chip .r{min-width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:800;box-shadow:0 6px 16px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.25);
+    transition:transform .3s;}
+  .result-chip .r.pop{transform:scale(1.15);}
+  .result-chip .txt{font-size:12px;color:#9aa6bd;}
+  .result-chip .txt b{color:var(--gold-2);}
+
+  .felt{margin:10px 12px;padding:12px;border-radius:16px;
+    background:radial-gradient(120% 100% at 50% 0%, #0f6b41, #0a4b2d 70%);
+    box-shadow:inset 0 0 0 2px rgba(232,192,96,.4), inset 0 0 30px rgba(0,0,0,.45), 0 10px 30px rgba(0,0,0,.4);}
+  .zero-row{margin-bottom:6px;}
+  .zero-row .cell{height:34px;background:linear-gradient(180deg,#17a35a,#0a5c31);font-size:16px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .colrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+  .colrow .cell{height:32px;font-size:11px;background:rgba(255,255,255,.09);color:var(--gold-2);}
+  .cell{border-radius:8px;font-weight:800;font-size:15px;color:#fff;
+    display:flex;align-items:center;justify-content:center;height:38px;
+    border:1px solid rgba(255,255,255,.18);position:relative;cursor:pointer;
+    transition:transform .08s, box-shadow .1s; user-select:none;}
+  .cell:active{transform:scale(.94);}
+  .cell.red{background:linear-gradient(180deg,#e23a4c,#b81e30);}
+  .cell.black{background:linear-gradient(180deg,#282c34,#12151b);}
+  .cell.col{background:rgba(255,255,255,.09);font-size:11px;color:var(--gold-2);}
+  .cell.win{box-shadow:0 0 0 3px var(--gold-2), 0 0 16px var(--gold);z-index:2;}
+  .cell .stake{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;
+    border-radius:10px;background:var(--gold-2);color:#2a1c07;font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.5);
+    border:1px solid #2a1c07;}
+  .outs,.outs2{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+  .outs .cell,.outs2 .cell{height:36px;font-size:12px;background:rgba(255,255,255,.09);}
+  .outs2 .cell.red{background:linear-gradient(180deg,#e23a4c,#b81e30);}
+  .outs2 .cell.black{background:linear-gradient(180deg,#282c34,#12151b);}
+
+  .chips{display:flex;justify-content:center;gap:10px;padding:12px 0 6px;flex-wrap:wrap;}
+  .chip{width:46px;height:46px;border-radius:50%;font-weight:800;font-size:13px;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    border:2px dashed rgba(255,255,255,.7);box-shadow:0 4px 10px rgba(0,0,0,.4);position:relative;
+    transition:transform .1s;}
+  .chip:active{transform:scale(.9);}
+  .chip.sel{outline:3px solid var(--gold-2);outline-offset:2px;transform:translateY(-3px);}
+  .chip.c5{background:radial-gradient(circle at 40% 35%,#5b9bd5,#2b5b8f);}
+  .chip.c20{background:radial-gradient(circle at 40% 35%,#57c07a,#1f7a44);}
+  .chip.c50{background:radial-gradient(circle at 40% 35%,#e07a57,#a83f22);}
+  .chip.c100{background:radial-gradient(circle at 40% 35%,#c264d6,#7a2b8f);}
+
+  .actions{display:flex;gap:10px;padding:4px 16px 22px;}
+  .btn{flex:1;height:52px;border:none;border-radius:14px;font-size:16px;font-weight:800;
+    letter-spacing:.5px;cursor:pointer;color:#fff;text-transform:uppercase;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.clear{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);}
+  .btn.spin{background:linear-gradient(180deg,#20b862,#0c8a44);
+    box-shadow:0 8px 22px rgba(16,160,80,.45), inset 0 1px 0 rgba(255,255,255,.35);
+    display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn.spin .ic{font-size:18px;}
+  .bet-info{text-align:center;font-size:12px;color:#9aa6bd;padding-bottom:6px;}
+  .bet-info b{color:var(--gold-2);}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(180deg,#1a2338,#0f1626);border:1px solid var(--gold);
+    color:var(--gold-2);font-weight:800;padding:12px 22px;border-radius:12px;font-size:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:all .3s;z-index:20;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="dot"></div><span>RULETA CARDIGAN</span></div>
+    <div class="balance"><div class="lbl">Saldo</div><div class="amt" id="bal">$ 8.450,00</div></div>
+  </div>
+
+  <div class="stage">
+    <div class="wheel-glow"></div>
+    <div class="wheel-outer">
+      <div class="pointer"></div>
+      <div class="rim"></div>
+      <div class="wheel" id="wheel"></div>
+      <div class="ball-track" id="track"><div class="ball" id="ball"></div></div>
+      <div class="hub"><div class="g"><b>36×</b></div></div>
+    </div>
+  </div>
+
+  <div class="result-chip">
+    <div class="r" id="resNum" style="background:linear-gradient(180deg,#e23a4c,#b81e30)">32</div>
+    <div class="txt" id="resTxt">Ultimo numero &nbsp;·&nbsp; <b>Rojo</b></div>
+  </div>
+
+  <div class="felt">
+    <div class="zero-row"><div class="cell green" data-bet="straight" data-n="0" style="background:linear-gradient(180deg,#17a35a,#0a5c31)">0</div></div>
+    <div class="grid" id="grid"></div>
+    <div class="colrow">
+      <div class="cell" data-bet="column" data-v="1">Col 1 &nbsp;2:1</div>
+      <div class="cell" data-bet="column" data-v="2">Col 2 &nbsp;2:1</div>
+      <div class="cell" data-bet="column" data-v="0">Col 3 &nbsp;2:1</div>
+    </div>
+    <div class="outs">
+      <div class="cell" data-bet="dozen" data-v="1">1ª 12</div>
+      <div class="cell" data-bet="dozen" data-v="2">2ª 12</div>
+      <div class="cell" data-bet="dozen" data-v="3">3ª 12</div>
+    </div>
+    <div class="outs2">
+      <div class="cell" data-bet="low">1-18</div>
+      <div class="cell" data-bet="even">PAR</div>
+      <div class="cell red" data-bet="red">ROJO</div>
+      <div class="cell black" data-bet="black">NEGRO</div>
+      <div class="cell" data-bet="odd">IMPAR</div>
+      <div class="cell" data-bet="high">19-36</div>
+    </div>
+  </div>
+
+  <div class="chips">
+    <div class="chip c5" data-v="5">$5</div>
+    <div class="chip c20 sel" data-v="20">$20</div>
+    <div class="chip c50" data-v="50">$50</div>
+    <div class="chip c100" data-v="100">$100</div>
+  </div>
+
+  <div class="bet-info">Apuesta total: <b id="totBet">$ 0,00</b> &nbsp;·&nbsp; Ficha: <b id="curChip">$20</b></div>
+
+  <div class="actions">
+    <button class="btn clear" id="btnClear">Limpiar</button>
+    <button class="btn spin" id="btnSpin"><span class="ic">↻</span> Girar</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const order=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const reds=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+  const N=order.length, step=360/N;
+  const idxOf={}; order.forEach((n,i)=>idxOf[n]=i);
+
+  // Build wheel labels
+  const wheel=document.getElementById('wheel');
+  order.forEach((num,i)=>{
+    const el=document.createElement('div');
+    el.className='num';
+    el.style.transform=`rotate(${i*step}deg)`;
+    const color = num===0? '#0f8a4a' : (reds.has(num)? '#d6283b':'#1a1d22');
+    el.innerHTML=`<span style="display:inline-block;transform:rotate(90deg);background:${color};padding:1px 3px;border-radius:3px;min-width:12px;text-align:center;">${num}</span>`;
+    wheel.appendChild(el);
+  });
+
+  // Build betting grid
+  const grid=document.getElementById('grid');
+  for(let r=0;r<12;r++){
+    for(let c=0;c<3;c++){
+      const num=r*3+c+1;
+      const cell=document.createElement('div');
+      cell.className='cell '+(reds.has(num)?'red':'black');
+      cell.dataset.bet='straight'; cell.dataset.n=num;
+      cell.innerHTML=num;
+      grid.appendChild(cell);
+    }
+  }
+  // Column bets sit in the .colrow row (data-v = n%3: col1->1, col2->2, col3->0)
+
+  // ---- State ----
+  let curChip=20, balance=8450, bets={}, totalBet=0, spinning=false;
+  let wheelAngle=0, ballAngle=0;
+  const fmt=v=>'$ '+v.toLocaleString('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const balEl=document.getElementById('bal'), totEl=document.getElementById('totBet');
+
+  function refresh(){
+    balEl.textContent=fmt(balance);
+    totEl.textContent=fmt(totalBet);
+  }
+  refresh();
+
+  // Chip selection
+  document.querySelectorAll('.chip').forEach(ch=>{
+    ch.addEventListener('click',()=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+      ch.classList.add('sel'); curChip=+ch.dataset.v;
+      document.getElementById('curChip').textContent='$'+curChip;
+    });
+  });
+
+  // Place bets
+  function betKey(el){
+    const b=el.dataset.bet;
+    if(b==='straight') return 'straight:'+el.dataset.n;
+    if(b==='dozen') return 'dozen:'+el.dataset.v;
+    if(b==='column') return 'column:'+el.dataset.v;
+    return b;
+  }
+  document.querySelectorAll('[data-bet]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      if(spinning) return;
+      if(balance-curChip < 0){ showToast('Saldo insuficiente'); return; }
+      const k=betKey(el);
+      bets[k]=(bets[k]||0)+curChip;
+      totalBet+=curChip; balance-=curChip;
+      let tag=el.querySelector('.stake');
+      if(!tag){ tag=document.createElement('div'); tag.className='stake'; el.appendChild(tag); }
+      tag.textContent=bets[k];
+      refresh(); beep(180,.03,'triangle');
+    });
+  });
+
+  document.getElementById('btnClear').addEventListener('click',()=>{
+    if(spinning) return;
+    balance+=totalBet; totalBet=0; bets={};
+    document.querySelectorAll('.stake').forEach(s=>s.remove());
+    refresh();
+  });
+
+  // ---- Audio (WebAudio for ball tick + chip) ----
+  let actx;
+  function beep(freq,dur,type){
+    try{
+      actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||'sine'; o.frequency.value=freq;
+      g.gain.value=.06; o.connect(g); g.connect(actx.destination);
+      o.start(); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dur);
+      o.stop(actx.currentTime+dur);
+    }catch(e){}
+  }
+
+  // ---- Voice (Spanish) ----
+  function speak(text){
+    try{
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='es-ES'; u.rate=.95; u.pitch=1;
+      const vs=speechSynthesis.getVoices();
+      const es=vs.find(v=>/es(-|_)/i.test(v.lang));
+      if(es) u.voice=es;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  // preload voices
+  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>{}; speechSynthesis.getVoices(); }
+
+  function colorName(n){ return n===0?'verde':(reds.has(n)?'rojo':'negro'); }
+
+  // ---- Payout ----
+  function pays(n){
+    let win=0;
+    for(const k in bets){
+      const amt=bets[k];
+      if(k.startsWith('straight:')){ if(+k.split(':')[1]===n) win+=amt*36; }
+      else if(k.startsWith('dozen:')){ const d=+k.split(':')[1];
+        if(n>=1&&n<=36 && Math.ceil(n/12)===d) win+=amt*3; }
+      else if(k.startsWith('column:')){ const cv=+k.split(':')[1];
+        if(n>=1&&n<=36 && (n%3)===cv) win+=amt*3; }
+      else if(k==='red'){ if(reds.has(n)) win+=amt*2; }
+      else if(k==='black'){ if(n!==0&&!reds.has(n)) win+=amt*2; }
+      else if(k==='even'){ if(n!==0&&n%2===0) win+=amt*2; }
+      else if(k==='odd'){ if(n%2===1) win+=amt*2; }
+      else if(k==='low'){ if(n>=1&&n<=18) win+=amt*2; }
+      else if(k==='high'){ if(n>=19&&n<=36) win+=amt*2; }
+    }
+    return win;
+  }
+
+  // ---- Spin animation ----
+  const ball=document.getElementById('ball'), track=document.getElementById('track');
+  const R=94; // ball orbit radius px
+  function placeBall(deg,radius){
+    const rad=(deg-90)*Math.PI/180;
+    const x=Math.cos(rad)*radius, y=Math.sin(rad)*radius;
+    ball.style.transform=`translate(${x}px,${y}px)`;
+  }
+  placeBall(0,R);
+
+  function showToast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2200);
+  }
+
+  function easeOut(t){ return 1-Math.pow(1-t,3); }
+
+  function spin(){
+    if(spinning) return;
+    if(totalBet<=0){ showToast('Poné una apuesta primero'); return; }
+    spinning=true;
+    document.getElementById('btnSpin').disabled=true;
+    document.getElementById('btnClear').disabled=true;
+    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win'));
+    if(actx) actx.resume();
+
+    // pick result
+    const result=order[Math.floor(Math.random()*N)];
+    const idx=idxOf[result];
+
+    // wheel spins forward so the winning pocket ends under the TOP pointer;
+    // ball spins backward and settles at the same top position (on the number).
+    const wheelStart=wheelAngle;
+    const ballStart=ballAngle;
+    const wheelTurns=4, ballTurns=6;
+    // Labels sit at (90 + idx*step + wheelAngle) clockwise from top (index 0 starts at 3 o'clock).
+    // Put winning pocket under the top pointer:  90 + idx*step + W ≡ 0 (mod 360)
+    let wheelEnd = wheelStart + 360*wheelTurns;
+    const needMod = ((-(90 + idx*step)) % 360 + 360) % 360;
+    const curMod  = ((wheelEnd % 360) + 360) % 360;
+    wheelEnd += ((needMod - curMod) + 360) % 360;
+    // ball ends at top (screen angle multiple of 360), travelling backwards
+    let ballEnd = ballStart - 360*ballTurns;
+    ballEnd = Math.floor(ballEnd/360)*360;
+
+    const dur=4200;
+    let startT=null, lastTick=0;
+    beep(90,.15,'sawtooth');
+
+    function frame(ts){
+      if(!startT) startT=ts;
+      const p=Math.min((ts-startT)/dur,1);
+      const e=easeOut(p);
+      wheelAngle = wheelStart + (wheelEnd-wheelStart)*e;
+      ballAngle  = ballStart + (ballEnd-ballStart)*e;
+      wheel.style.transform=`rotate(${wheelAngle}deg)`;
+      // ball radius drops toward rim as it settles (drop-in effect) + small bounce near end
+      let radius=R;
+      if(p>0.72){
+        const q=(p-0.72)/0.28;
+        const bounce=Math.abs(Math.sin(q*Math.PI*3))*(1-q)*7;
+        radius = R - q*14 + bounce;
+      }
+      placeBall(ballAngle, radius);
+      // tick sound as ball passes pockets
+      if(ts-lastTick>Math.max(60, 60+ p*260)){ lastTick=ts; if(p<0.95) beep(1200-800*p,.02,'square'); }
+      if(p<1){ requestAnimationFrame(frame); }
+      else { settle(result); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function settle(n){
+    // show result chip
+    const rn=document.getElementById('resNum'), rt=document.getElementById('resTxt');
+    const col=colorName(n);
+    const bg = n===0?'linear-gradient(180deg,#17a35a,#0a5c31)':(reds.has(n)?'linear-gradient(180deg,#e23a4c,#b81e30)':'linear-gradient(180deg,#282c34,#12151b)');
+    rn.textContent=n; rn.style.background=bg; rn.classList.add('pop');
+    setTimeout(()=>rn.classList.remove('pop'),300);
+    rt.innerHTML='Ultimo numero &nbsp;·&nbsp; <b>'+col.charAt(0).toUpperCase()+col.slice(1)+'</b>';
+
+    // highlight winning straight cell
+    document.querySelectorAll('[data-bet="straight"]').forEach(c=>{ if(+c.dataset.n===n) c.classList.add('win'); });
+
+    // voice
+    speak(n===0? 'Cero, verde' : (n+', '+col));
+    beep(660,.12,'sine');
+
+    // payout
+    const win=pays(n);
+    setTimeout(()=>{
+      if(win>0){ balance+=win; showToast('¡Ganaste '+fmt(win)+'!'); beep(880,.2,'sine'); }
+      else if(totalBet>0){ showToast('Sin premio esta vez'); }
+      // clear bets
+      totalBet=0; bets={};
+      document.querySelectorAll('.stake').forEach(s=>s.remove());
+      refresh();
+      spinning=false;
+      document.getElementById('btnSpin').disabled=false;
+      document.getElementById('btnClear').disabled=false;
+    }, 900);
+  }
+
+  document.getElementById('btnSpin').addEventListener('click',spin);
+</script>
+</body>
+</html>
