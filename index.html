@@ -67,7 +67,7 @@
     box-shadow:inset 0 0 0 2px rgba(232,192,96,.45), inset 0 0 34px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);}
   .board{position:relative;display:grid;
     grid-template-columns:38px 30px repeat(3,1fr);
-    grid-template-rows:26px repeat(12,27px) 24px;
+    grid-template-rows:28px repeat(12,35px) 26px;
     gap:1.5px; background:rgba(255,255,255,.5); border:1.5px solid rgba(255,255,255,.55);
     border-radius:5px; overflow:hidden;}
   .tile{display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;
@@ -309,25 +309,29 @@
     const t=e.target.closest('[data-bet]'); if(!t) return;
     dragging=true; painting=false; startEl=t; sx=e.clientX; sy=e.clientY; visited.clear();
   });
+  let scrolling=false;
   felt.addEventListener('pointermove', e=>{
     if(!dragging) return;
     const dx=e.clientX-sx, dy=e.clientY-sy;
-    if(!painting){
-      if(Math.abs(dx)>12 && Math.abs(dx)>Math.abs(dy)*1.3){ // horizontal → start painting
-        painting=true; if(addBet(startEl,curChip)) visited.add(startEl);
-      } else if(Math.abs(dy)>10){ dragging=false; return; } // vertical → let the page scroll
-      else return;
+    if(!painting && !scrolling){
+      if(Math.abs(dx)>7 || Math.abs(dy)>7){          // gesture direction decided
+        if(Math.abs(dx) >= Math.abs(dy)){            // horizontal → paint the row
+          painting=true; if(addBet(startEl,curChip)) visited.add(startEl);
+        } else { scrolling=true; dragging=false; return; } // vertical → let page scroll
+      } else return;
     }
-    const t=bettableAt(e.clientX,e.clientY);
-    if(t && !visited.has(t)){ if(addBet(t,curChip)) visited.add(t); }
-    e.preventDefault();
+    if(painting){
+      const t=bettableAt(e.clientX,e.clientY);
+      if(t && !visited.has(t)){ if(addBet(t,curChip)) visited.add(t); }
+      e.preventDefault();
+    }
   }, {passive:false});
-  function endTap(e){
-    if(dragging && !painting && startEl){ addBet(startEl,curChip); } // simple tap
-    dragging=false; painting=false; startEl=null; visited.clear();
-  }
-  felt.addEventListener('pointerup', endTap);
-  felt.addEventListener('pointercancel', ()=>{ dragging=false; painting=false; startEl=null; visited.clear(); });
+  function resetDrag(){ dragging=false; painting=false; scrolling=false; startEl=null; visited.clear(); }
+  felt.addEventListener('pointerup', e=>{
+    if(dragging && !painting && !scrolling && startEl){ addBet(startEl,curChip); } // simple tap
+    resetDrag();
+  });
+  felt.addEventListener('pointercancel', resetDrag);
 
   document.getElementById('btnClear').addEventListener('click',()=>{ if(spinning) return; stopTimer(); clearBets(); });
   const btnRepeat=document.getElementById('btnRepeat');
@@ -341,7 +345,7 @@
   renderHist();
 
   // ---------- Timer 15s ----------
-  let timer=null, tleft=0; const TSEC=15;
+  let timer=null, tleft=0; const TSEC=25;
   const tbar=document.getElementById('tbar'), tfill=document.getElementById('tfill'), ttxt=document.getElementById('ttxt');
   function startTimer(){ if(timer) return;
     tleft=TSEC; tbar.classList.add('on'); tfill.style.transition='none'; tfill.style.width='100%'; ttxt.innerHTML='Hagan sus apuestas · <b>'+tleft+'s</b>';
