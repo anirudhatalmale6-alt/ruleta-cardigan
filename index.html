@@ -206,14 +206,27 @@
       <radialGradient id="cone" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#39415a"/><stop offset="60%" stop-color="#161a24"/><stop offset="100%" stop-color="#0a0d14"/></radialGradient>
       <radialGradient id="turret" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#f4dd9a"/><stop offset="50%" stop-color="#c79a3a"/><stop offset="100%" stop-color="#6e4e18"/></radialGradient>
       <radialGradient id="pearl" cx="38%" cy="32%" r="70%"><stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#dfe4ec"/><stop offset="100%" stop-color="#aab2c0"/></radialGradient>
+      <radialGradient id="dome" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#fdf3d0"/><stop offset="45%" stop-color="#d9b45e"/><stop offset="100%" stop-color="#78521a"/></radialGradient>
+      <radialGradient id="silver" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#c6cdd8"/><stop offset="100%" stop-color="#6d7480"/></radialGradient>
     </defs>
     <circle cx="125" cy="125" r="123" fill="url(#rim)"/><circle cx="125" cy="125" r="112" fill="#120d05"/><circle cx="125" cy="125" r="110" fill="#0d1017"/>
     ${diamonds}<circle cx="125" cy="125" r="96" fill="#0a0d13"/>
     <g id="wheelRot">${seg}
-      <circle cx="125" cy="125" r="63" fill="url(#cone)"/><circle cx="125" cy="125" r="34" fill="none" stroke="#caa54a" stroke-width="1.4" opacity=".6"/>
-      <circle cx="125" cy="125" r="24" fill="url(#turret)"/>
-      <ellipse cx="125" cy="118" rx="6" ry="12" fill="#f4dd9a" opacity=".9"/><ellipse cx="125" cy="132" rx="6" ry="12" fill="#8a6420" opacity=".9"/>
-      <circle cx="125" cy="125" r="6" fill="#f4dd9a"/>
+      <circle cx="125" cy="125" r="63" fill="url(#cone)"/>
+      <circle cx="125" cy="125" r="41" fill="#0a0d13"/>
+      <circle cx="125" cy="125" r="40" fill="none" stroke="#caa54a" stroke-width="1" opacity=".55"/>
+      <!-- turret: crossed metallic arms (spindle handle, top view) -->
+      <g opacity=".95">
+        <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(45 125 125)"/>
+        <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(-45 125 125)"/>
+      </g>
+      <!-- domed metallic hub -->
+      <circle cx="125" cy="125" r="27" fill="url(#dome)"/>
+      <circle cx="125" cy="125" r="27" fill="none" stroke="#8a6420" stroke-width="1.4"/>
+      <circle cx="125" cy="125" r="17" fill="url(#silver)"/>
+      <circle cx="125" cy="125" r="17" fill="none" stroke="#e8c060" stroke-width="1" opacity=".7"/>
+      <circle cx="125" cy="125" r="8.5" fill="url(#dome)"/>
+      <circle cx="121" cy="121" r="3" fill="#fff" opacity=".85"/>
     </g>
     <circle id="ball" cx="125" cy="30" r="5.6" fill="url(#pearl)" stroke="#c9cfda" stroke-width=".4"/>`;
   const wheelRot=document.getElementById('wheelRot'), ballEl=document.getElementById('ball');
@@ -306,8 +319,8 @@
   let dragging=false, painting=false, startEl=null, sx=0, sy=0; const visited=new Set();
   function bettableAt(x,y){ const el=document.elementFromPoint(x,y); return el? el.closest('[data-bet]') : null; }
   felt.addEventListener('pointerdown', e=>{
-    const t=e.target.closest('[data-bet]'); if(!t) return;
-    dragging=true; painting=false; startEl=t; sx=e.clientX; sy=e.clientY; visited.clear();
+    const t=e.target.closest('[data-bet],.hot'); if(!t) return; // include border-bet hotspots
+    dragging=true; painting=false; scrolling=false; startEl=t; sx=e.clientX; sy=e.clientY; visited.clear();
   });
   let scrolling=false;
   felt.addEventListener('pointermove', e=>{
