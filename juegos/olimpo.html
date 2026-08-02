@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olimpo Dorado</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{--gold:#f4cf5a;--gold2:#ffe89a;--pur:#2a1550;--pur2:#160a30;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;color:#fff;overflow-x:hidden;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #5a3aa8 0%, #2a1550 45%, #120826 100%);
+    min-height:100vh;display:flex;flex-direction:column;}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    background:linear-gradient(180deg,rgba(20,8,44,.85),rgba(20,8,44,.2));border-bottom:1px solid rgba(244,207,90,.3);}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:900;letter-spacing:.5px;font-size:15px;}
+  .brand .z{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe89a,#c79a2a);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(244,207,90,.6);}
+  .brand b{background:linear-gradient(180deg,var(--gold2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .bal{text-align:right;line-height:1.05;}
+  .bal .l{font-size:9px;color:#b9a9e0;letter-spacing:1px;text-transform:uppercase;}
+  .bal .v{font-size:16px;font-weight:800;color:var(--gold2);}
+
+  .stage{position:relative;margin:12px auto 6px;width:calc(100% - 20px);max-width:400px;}
+  .frame{position:relative;border-radius:16px;padding:8px;
+    background:linear-gradient(180deg,rgba(80,50,150,.5),rgba(30,14,60,.6));
+    box-shadow:inset 0 0 0 2px rgba(244,207,90,.5), 0 12px 34px rgba(0,0,0,.5);}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:1fr;gap:5px;position:relative;}
+  .cell{aspect-ratio:1/1;border-radius:11px;position:relative;overflow:hidden;
+    background:radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.10), rgba(255,255,255,.02));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;
+    transition:transform .12s;}
+  .cell svg{width:78%;height:78%;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));}
+  .cell.drop{animation:drop .32s cubic-bezier(.3,1.3,.5,1);}
+  @keyframes drop{from{transform:translateY(-140%);}to{transform:translateY(0);}}
+  .cell.win{box-shadow:inset 0 0 0 2px var(--gold2), 0 0 18px rgba(244,207,90,.8);z-index:2;}
+  .cell.pop{animation:pop .3s ease forwards;}
+  @keyframes pop{to{transform:scale(0);opacity:0;}}
+  .orb{position:absolute;z-index:6;width:46px;height:46px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 38% 32%, #d79bff, #7a1fd0 60%, #3c0a70);
+    box-shadow:0 0 18px rgba(160,60,255,.9), inset 0 0 8px rgba(255,255,255,.5);
+    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);transform:translate(-50%,-50%) scale(0);animation:orbin .4s ease forwards;}
+  @keyframes orbin{to{transform:translate(-50%,-50%) scale(1);}}
+
+  .winbanner{position:absolute;left:50%;top:44%;z-index:8;text-align:center;
+    transform:translate(-50%,-50%) scale(0);pointer-events:none;}
+  .winbanner.show{animation:wb .5s ease forwards;}
+  @keyframes wb{to{transform:translate(-50%,-50%) scale(1);}}
+  .winbanner .t{font-size:13px;color:var(--gold2);letter-spacing:2px;font-weight:800;text-shadow:0 2px 6px #000;}
+  .winbanner .a{font-size:34px;font-weight:900;color:#fff;text-shadow:0 0 18px rgba(244,207,90,.9),0 3px 6px #000;
+    background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;}
+
+  .totwin{text-align:center;min-height:24px;margin:2px 0;font-weight:800;color:var(--gold2);font-size:15px;}
+  .mult-tot{color:#d79bff;}
+
+  .controls{margin:4px auto 18px;width:calc(100% - 20px);max-width:400px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px;}
+  .betbox{display:flex;align-items:center;gap:6px;background:rgba(20,8,44,.6);border:1px solid rgba(244,207,90,.35);
+    border-radius:14px;padding:6px 8px;}
+  .betbox .lbl{font-size:9px;color:#b9a9e0;text-transform:uppercase;letter-spacing:.5px;}
+  .betbox .val{font-size:15px;font-weight:800;color:#fff;min-width:56px;text-align:center;}
+  .stepper{display:flex;flex-direction:column;gap:3px;}
+  .sbtn{width:26px;height:20px;border-radius:6px;border:none;background:rgba(244,207,90,.2);color:var(--gold2);
+    font-weight:900;font-size:12px;cursor:pointer;}
+  .spinwrap{display:flex;align-items:center;gap:8px;}
+  .buy{width:52px;height:52px;border-radius:50%;border:1px solid rgba(244,207,90,.5);
+    background:radial-gradient(circle at 40% 35%,#ffd24d,#b8791a);color:#3a2400;font-weight:900;font-size:9px;
+    display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.4);}
+  .spin{width:74px;height:74px;border-radius:50%;border:none;cursor:pointer;position:relative;
+    background:radial-gradient(circle at 40% 33%,#7be0a0,#12a35a 55%,#0a7a40);
+    box-shadow:0 0 0 3px rgba(244,207,90,.7), 0 10px 24px rgba(16,160,80,.5), inset 0 2px 0 rgba(255,255,255,.4);}
+  .spin .ic{font-size:30px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.4);}
+  .spin:disabled{opacity:.6;}
+  .spin.spinning .ic{animation:rot .6s linear infinite;}
+  @keyframes rot{to{transform:rotate(360deg);}}
+  .hint{text-align:center;font-size:10.5px;color:#a99cd0;padding:0 16px 20px;line-height:1.4;}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:rgba(24,10,52,.95);border:1px solid var(--gold);color:var(--gold2);font-weight:800;
+    padding:10px 20px;border-radius:12px;font-size:14px;transition:all .3s;z-index:30;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .back{position:absolute;left:12px;top:11px;font-size:12px;color:#c9bdf0;text-decoration:none;z-index:9;}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand"><div class="z">⚡</div><b>OLIMPO DORADO</b></div>
+    <div class="bal"><div class="l">Saldo</div><div class="v" id="bal">$ 8.450,00</div></div>
+  </div>
+
+  <div class="stage">
+    <div class="frame">
+      <div class="grid" id="grid"></div>
+      <div class="winbanner" id="wb"><div class="t">¡GANANCIA!</div><div class="a" id="wbAmt">$ 0</div></div>
+    </div>
+  </div>
+
+  <div class="totwin" id="totwin"></div>
+
+  <div class="controls">
+    <div class="betbox">
+      <div class="stepper"><button class="sbtn" id="betUp">+</button><button class="sbtn" id="betDn">−</button></div>
+      <div><div class="lbl">Apuesta</div><div class="val" id="betVal">$ 20</div></div>
+    </div>
+    <div class="spinwrap">
+      <button class="buy" id="buy">COMPRAR<br>GIROS</button>
+      <button class="spin" id="spin"><span class="ic">↻</span></button>
+    </div>
+  </div>
+
+  <div class="hint">Caen 8 o más símbolos iguales en cualquier lugar y pagás. Los símbolos ganadores explotan y caen nuevos (tumble). Los orbes morados multiplican tu ganancia. En español y optimizado para celular.</div>
+  <div class="toast" id="toast"></div>
+
+<script>
+  const fmt=v=>'$ '+Math.round(v).toLocaleString('es-UY');
+  const fmt2=v=>'$ '+v.toLocaleString('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const COLS=6, ROWS=5;
+
+  // ---- Symbols ----
+  const GEM_COLORS={
+    ruby:['#ff5b7a','#d0143a','#8a0a26'], sapphire:['#6fa8ff','#2f6fe0','#123f8f'],
+    emerald:['#6ff0a0','#1fae5a','#0c6e37'], amethyst:['#c98cff','#9b3fd6','#5c1f8a'],
+    topaz:['#ffe08a','#f2b21e','#a8720a'], citrine:['#ffb06a','#ff7a2f','#a8450a']
+  };
+  function gemSVG(c){ const [a,b,d]=GEM_COLORS[c];
+    return `<svg viewBox="0 0 100 100"><defs><linearGradient id="g${c}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>
+      <polygon points="50,6 88,32 72,92 28,92 12,32" fill="url(#g${c})" stroke="${b}" stroke-width="3"/>
+      <polygon points="50,6 88,32 50,44 12,32" fill="${a}" opacity=".55"/>
+      <polygon points="50,44 72,92 50,92 28,92" fill="${d}" opacity=".4"/>
+      <polygon points="12,32 50,44 28,92" fill="#fff" opacity=".12"/></svg>`; }
+  function crownSVG(){ return `<svg viewBox="0 0 100 100"><defs><linearGradient id="cr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe89a"/><stop offset="1" stop-color="#c79a2a"/></linearGradient></defs>
+    <path d="M16 74 L10 34 L34 54 L50 22 L66 54 L90 34 L84 74 Z" fill="url(#cr)" stroke="#8a6410" stroke-width="3"/>
+    <rect x="16" y="74" width="68" height="12" rx="3" fill="url(#cr)" stroke="#8a6410" stroke-width="3"/>
+    <circle cx="50" cy="22" r="6" fill="#ff5b7a"/><circle cx="10" cy="34" r="5" fill="#6fa8ff"/><circle cx="90" cy="34" r="5" fill="#6fa8ff"/></svg>`; }
+  function ringSVG(){ return `<svg viewBox="0 0 100 100"><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe89a"/><stop offset="1" stop-color="#b8791a"/></linearGradient></defs>
+    <circle cx="50" cy="60" r="26" fill="none" stroke="url(#rg)" stroke-width="9"/>
+    <polygon points="50,10 62,30 50,42 38,30" fill="#6ff0a0" stroke="#1fae5a" stroke-width="2"/></svg>`; }
+  function chaliceSVG(){ return `<svg viewBox="0 0 100 100"><defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe89a"/><stop offset="1" stop-color="#b8791a"/></linearGradient></defs>
+    <path d="M26 20 H74 L66 48 Q50 66 34 48 Z" fill="url(#ch)" stroke="#8a6410" stroke-width="3"/>
+    <rect x="46" y="58" width="8" height="18" fill="url(#ch)"/><rect x="30" y="78" width="40" height="8" rx="3" fill="url(#ch)" stroke="#8a6410" stroke-width="2"/>
+    <ellipse cx="50" cy="22" rx="24" ry="6" fill="#ff5b7a" opacity=".8"/></svg>`; }
+  function boltSVG(){ return `<svg viewBox="0 0 100 100"><defs><linearGradient id="bz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6cf"/><stop offset="1" stop-color="#f2b21e"/></linearGradient></defs>
+    <polygon points="56,6 24,54 46,54 40,94 78,40 54,40" fill="url(#bz)" stroke="#a8720a" stroke-width="3"/></svg>`; }
+
+  // symbol registry: key -> {render, weight, pay:[t8_9,t10_11,t12] as x of bet}
+  const SYMS={
+    ruby:{r:()=>gemSVG('ruby'),w:20,pay:[.25,.75,2]},
+    sapphire:{r:()=>gemSVG('sapphire'),w:20,pay:[.25,.75,2]},
+    emerald:{r:()=>gemSVG('emerald'),w:18,pay:[.3,.9,2.4]},
+    amethyst:{r:()=>gemSVG('amethyst'),w:16,pay:[.4,1,3]},
+    topaz:{r:()=>gemSVG('topaz'),w:14,pay:[.5,1.2,4]},
+    citrine:{r:()=>gemSVG('citrine'),w:12,pay:[.6,1.5,5]},
+    chalice:{r:chaliceSVG,w:9,pay:[1,2,6]},
+    ring:{r:ringSVG,w:7,pay:[1.5,3,8]},
+    crown:{r:crownSVG,w:5,pay:[2.5,5,12]}
+  };
+  const KEYS=Object.keys(SYMS);
+  const WSUM=KEYS.reduce((s,k)=>s+SYMS[k].w,0);
+  function randSym(){ let r=Math.random()*WSUM; for(const k of KEYS){ r-=SYMS[k].w; if(r<=0) return k; } return KEYS[0]; }
+
+  // ---- State ----
+  let balance=8450, bet=20, spinning=false;
+  const BETS=[5,10,20,50,100,200];
+  let cells=[]; // flat array length COLS*ROWS, DOM refs
+  let g=[];     // grid symbols [r*COLS+c]
+  const gridEl=document.getElementById('grid');
+  const balEl=document.getElementById('bal'), betEl=document.getElementById('betVal');
+  function refresh(){ balEl.textContent=fmt2(balance); betEl.textContent=fmt(bet).replace(',00',''); }
+
+  function buildGrid(){
+    gridEl.innerHTML=''; cells=[];
+    for(let i=0;i<COLS*ROWS;i++){ const d=document.createElement('div'); d.className='cell'; gridEl.appendChild(d); cells.push(d); }
+  }
+  function idx(r,c){ return r*COLS+c; }
+  function setCell(i,sym,drop){ const d=cells[i]; d.className='cell'+(drop?' drop':''); d.innerHTML=SYMS[sym].r(); }
+
+  function fillRandom(drop){ g=[]; for(let i=0;i<COLS*ROWS;i++){ const s=randSym(); g[i]=s; setCell(i,s,drop); } }
+
+  // ---- Win evaluation (pay-anywhere >=8) ----
+  function evaluate(){
+    const counts={}, positions={};
+    for(let i=0;i<g.length;i++){ const s=g[i]; (counts[s]=(counts[s]||0)+1); (positions[s]=positions[s]||[]).push(i); }
+    let win=0; const winCells=[];
+    for(const s in counts){ const n=counts[s]; if(n>=8){ const t=n>=12?2:(n>=10?1:0); win += SYMS[s].pay[t]*bet; winCells.push(...positions[s]); } }
+    return {win, winCells};
+  }
+
+  function orbAt(i,mult){
+    const d=cells[i]; const rect=d.getBoundingClientRect(); const gr=gridEl.getBoundingClientRect();
+    const orb=document.createElement('div'); orb.className='orb'; orb.textContent='x'+mult;
+    orb.style.left=(rect.left-gr.left+rect.width/2)+'px'; orb.style.top=(rect.top-gr.top+rect.height/2)+'px';
+    gridEl.appendChild(orb); return orb;
+  }
+
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  function beep(f,d,t){ try{ const a=beep.c=beep.c||new(AudioContext||webkitAudioContext)(); const o=a.createOscillator(),g2=a.createGain();
+    o.type=t||'sine';o.frequency.value=f;g2.gain.value=.05;o.connect(g2);g2.connect(a.destination);o.start();
+    g2.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.stop(a.currentTime+d);}catch(e){} }
+  function say(t){ try{ const u=new SpeechSynthesisUtterance(t);u.lang='es-ES';u.rate=1;speechSynthesis.speak(u);}catch(e){} }
+
+  async function tumbleCycle(){
+    let total=0, orbMults=[]; const orbEls=[];
+    while(true){
+      const {win, winCells}=evaluate();
+      if(win<=0) break;
+      total+=win;
+      beep(720,.12,'triangle');
+      // highlight
+      winCells.forEach(i=>cells[i].classList.add('win'));
+      // chance to drop multiplier orbs on this tumble
+      if(Math.random()<0.55){ const nOrb=1+(Math.random()<0.3?1:0);
+        for(let k=0;k<nOrb;k++){ const mv=[2,3,5,10,25,50,100][Math.floor(Math.random()*7)];
+          const free=[]; for(let i=0;i<g.length;i++) if(!winCells.includes(i)) free.push(i);
+          const pos=free.length?free[Math.floor(Math.random()*free.length)]:Math.floor(Math.random()*g.length);
+          orbMults.push(mv); orbEls.push(orbAt(pos,mv)); beep(300,.15,'sawtooth'); }
+      }
+      document.getElementById('totwin').innerHTML='Ganancia: <b>'+fmt2(total)+'</b>'+(orbMults.length?' <span class="mult-tot">(x'+orbMults.reduce((a,b)=>a+b,0)+')</span>':'');
+      await wait(520);
+      // pop winners
+      winCells.forEach(i=>{ cells[i].classList.remove('win'); cells[i].classList.add('pop'); });
+      await wait(300);
+      // cascade per column
+      for(let c=0;c<COLS;c++){
+        const col=[]; for(let r=ROWS-1;r>=0;r--){ const i=idx(r,c); if(!winCells.includes(i)) col.push(g[i]); }
+        while(col.length<ROWS) col.push(randSym());
+        for(let r=ROWS-1, k=0; r>=0; r--, k++){ const i=idx(r,c); g[i]=col[k]; setCell(i,g[i],true); }
+      }
+      await wait(340);
+    }
+    // apply multiplier orbs at end if there was any win
+    let mult = orbMults.length? orbMults.reduce((a,b)=>a+b,0) : 1;
+    if(total>0 && mult>1){ total*=mult; beep(900,.25,'sine'); }
+    orbEls.forEach(o=>o.remove());
+    return {total, mult};
+  }
+
+  async function doSpin(free){
+    if(spinning) return;
+    if(!free && balance<bet){ showToast('Saldo insuficiente'); return; }
+    spinning=true; document.getElementById('spin').disabled=true; document.getElementById('spin').classList.add('spinning');
+    document.getElementById('buy').disabled=true;
+    document.getElementById('totwin').textContent=''; hideBanner();
+    if(!free){ balance-=bet; refresh(); }
+    beep(160,.1,'square');
+    // drop new full grid column by column for feel
+    for(let c=0;c<COLS;c++){ for(let r=0;r<ROWS;r++){ const i=idx(r,c); const s=randSym(); g[i]=s; setCell(i,s,true); } await wait(55); }
+    await wait(260);
+    const {total,mult}=await tumbleCycle();
+    if(total>0){ balance+=total; refresh(); showBanner(total,mult); if(total>=bet*20) say('¡Gran ganancia!'); else say('¡Ganaste!'); }
+    else { document.getElementById('totwin').textContent=''; }
+    spinning=false; document.getElementById('spin').disabled=false; document.getElementById('spin').classList.remove('spinning');
+    document.getElementById('buy').disabled=false;
+  }
+
+  function showBanner(amt,mult){ const wb=document.getElementById('wb'); document.getElementById('wbAmt').textContent=fmt(amt);
+    wb.querySelector('.t').textContent = mult>1? ('¡GANANCIA x'+mult+'!') : '¡GANANCIA!';
+    wb.classList.add('show'); setTimeout(()=>hideBanner(),2600); }
+  function hideBanner(){ document.getElementById('wb').classList.remove('show'); }
+  function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+  // ---- Controls ----
+  document.getElementById('betUp').onclick=()=>{ const i=BETS.indexOf(bet); if(i<BETS.length-1){ bet=BETS[i+1]; refresh(); } };
+  document.getElementById('betDn').onclick=()=>{ const i=BETS.indexOf(bet); if(i>0){ bet=BETS[i-1]; refresh(); } };
+  document.getElementById('spin').onclick=()=>doSpin(false);
+  document.getElementById('buy').onclick=()=>{
+    if(spinning) return; const cost=bet*100;
+    if(balance<cost){ showToast('Compra: '+fmt2(cost)); return; }
+    balance-=cost; refresh(); showToast('¡Giros comprados! Buena suerte'); doSpin(true);
+  };
+
+  buildGrid(); fillRandom(false); refresh();
+</script>
+</body>
+</html>
