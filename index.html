@@ -205,11 +205,21 @@
   seg+=`<circle cx="125" cy="125" r="95" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.4"/>`;
   seg+=`<circle cx="125" cy="125" r="63.5" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="1.6"/>`;
   seg+=`<circle cx="125" cy="125" r="62.4" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".6"/>`;
-  // 3D metallic diamond deflectors, sit on the ball track
-  let diamonds=''; for(let d=0; d<8; d++){ const [dx,dy]=ptTop(104.5, d*45);
-    diamonds+=`<g transform="rotate(45 ${dx.toFixed(2)} ${dy.toFixed(2)})">`+
-      `<rect x="${(dx-3.6).toFixed(2)}" y="${(dy-3.6).toFixed(2)}" width="7.2" height="7.2" rx="1.1" fill="url(#diam)" stroke="#5e4416" stroke-width=".5"/>`+
-      `<rect x="${(dx-3).toFixed(2)}" y="${(dy-3).toFixed(2)}" width="3.2" height="3.2" rx=".8" fill="#fff" opacity=".55"/></g>`; }
+  // realistic 3D diamond (rhombus) deflectors with metallic facets + cast shadow
+  let diamonds=''; for(let d=0; d<8; d++){ const a=d*45, [dx,dy]=ptTop(104.5, a);
+    diamonds+=`<g transform="translate(${dx.toFixed(2)} ${dy.toFixed(2)}) rotate(${a})">`+
+      `<polygon points="0,-9 5.4,0 0,9 -5.4,0" fill="#000" opacity=".38" transform="translate(0.9 1.3)"/>`+
+      `<polygon points="0,-8.2 4.8,0 0,8.2 -4.8,0" fill="url(#diam)" stroke="#5e4416" stroke-width=".55"/>`+
+      `<polygon points="0,-8.2 4.8,0 0,0 -4.8,0" fill="#fff5d4" opacity=".5"/>`+
+      `<polygon points="0,-8.2 0,0 -4.8,0" fill="#ffffff" opacity=".4"/>`+
+      `<line x1="0" y1="-8.2" x2="0" y2="8.2" stroke="#4a3410" stroke-width=".45" opacity=".55"/>`+
+      `<circle cx="-1.4" cy="-3.4" r="1" fill="#fff" opacity=".85"/></g>`; }
+  // center ornament: ring of rivets + tapered spindle blades (8-point star), built here
+  let studs=''; for(let s=0; s<12; s++){ const a=s*30, [sx,sy]=ptTop(31, a);
+    studs+=`<circle cx="${sx.toFixed(2)}" cy="${sy.toFixed(2)}" r="1.5" fill="url(#silver)" stroke="#5e4416" stroke-width=".35"/>`; }
+  let blades=''; for(let bl=0; bl<8; bl++){ const a=bl*45;
+    blades+=`<g transform="rotate(${a} 125 125)"><polygon points="125,90 128.4,118 125,122 121.6,118" fill="url(#silver)" stroke="#6d7480" stroke-width=".35"/>`+
+      `<polygon points="125,90 125,122 121.6,118" fill="#fff" opacity=".35"/></g>`; }
   document.getElementById('wsvg').innerHTML=`
     <defs>
       <radialGradient id="bezel" cx="40%" cy="30%" r="72%"><stop offset="0%" stop-color="#fff6d2"/><stop offset="30%" stop-color="#f0d47e"/><stop offset="62%" stop-color="#c39a3e"/><stop offset="86%" stop-color="#8a6522"/><stop offset="100%" stop-color="#513913"/></radialGradient>
@@ -221,11 +231,12 @@
       <radialGradient id="pockShade" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#000" stop-opacity="0"/><stop offset="72%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".5"/></radialGradient>
       <linearGradient id="fret" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8c8577"/><stop offset="50%" stop-color="#e8e2d2"/><stop offset="100%" stop-color="#6e6656"/></linearGradient>
       <radialGradient id="diam" cx="38%" cy="28%" r="72%"><stop offset="0%" stop-color="#fff2c4"/><stop offset="50%" stop-color="#d9b45e"/><stop offset="100%" stop-color="#8a6420"/></radialGradient>
-      <radialGradient id="pearl" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#ffffff"/><stop offset="55%" stop-color="#e2e7ef"/><stop offset="100%" stop-color="#9aa3b2"/></radialGradient>
+      <radialGradient id="pearl" cx="33%" cy="27%" r="78%"><stop offset="0%" stop-color="#ffffff"/><stop offset="26%" stop-color="#fff3c4"/><stop offset="60%" stop-color="#ffce5a"/><stop offset="100%" stop-color="#a9761b"/></radialGradient>
+      <radialGradient id="jewel" cx="38%" cy="30%" r="70%"><stop offset="0%" stop-color="#ff8f9a"/><stop offset="45%" stop-color="#e0293a"/><stop offset="100%" stop-color="#7c0f1a"/></radialGradient>
       <radialGradient id="dome" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#fdf3d0"/><stop offset="45%" stop-color="#d9b45e"/><stop offset="100%" stop-color="#78521a"/></radialGradient>
       <radialGradient id="silver" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#c6cdd8"/><stop offset="100%" stop-color="#6d7480"/></radialGradient>
       <radialGradient id="glass" cx="34%" cy="26%" r="70%"><stop offset="0%" stop-color="#fff" stop-opacity=".38"/><stop offset="42%" stop-color="#fff" stop-opacity=".06"/><stop offset="60%" stop-color="#fff" stop-opacity="0"/></radialGradient>
-      <filter id="ballsh" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#000" flood-opacity=".55"/></filter>
+      <filter id="ballsh" x="-90%" y="-90%" width="280%" height="280%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.2" flood-color="#000" flood-opacity=".55"/><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#ffd76a" flood-opacity=".6"/></filter>
     </defs>
     <circle cx="125" cy="125" r="124" fill="url(#bezel)"/>
     <circle cx="125" cy="125" r="124" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
@@ -236,27 +247,33 @@
     ${diamonds}
     <g id="wheelRot">${seg}
       <circle cx="125" cy="125" r="63" fill="url(#cone)"/>
+      <!-- detailed turret ornament (top view) -->
       <circle cx="125" cy="125" r="41" fill="#0a0d13"/>
       <circle cx="125" cy="125" r="40" fill="none" stroke="#caa54a" stroke-width="1" opacity=".55"/>
-      <!-- turret: crossed metallic arms (spindle handle, top view) -->
-      <g opacity=".97">
-        <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(45 125 125)"/>
-        <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(-45 125 125)"/>
-      </g>
-      <!-- domed metallic hub -->
-      <circle cx="125" cy="125" r="27" fill="url(#dome)"/>
-      <circle cx="125" cy="125" r="27" fill="none" stroke="#8a6420" stroke-width="1.4"/>
-      <circle cx="125" cy="125" r="17" fill="url(#silver)"/>
-      <circle cx="125" cy="125" r="17" fill="none" stroke="#e8c060" stroke-width="1" opacity=".7"/>
-      <circle cx="125" cy="125" r="8.5" fill="url(#dome)"/>
-      <circle cx="121" cy="121" r="3" fill="#fff" opacity=".85"/>
+      <circle cx="125" cy="125" r="37" fill="url(#dome)"/>
+      <circle cx="125" cy="125" r="37" fill="none" stroke="#5e4416" stroke-width="1.2"/>
+      <circle cx="125" cy="125" r="33.5" fill="#0e1119"/>
+      ${studs}
+      <circle cx="125" cy="125" r="29" fill="none" stroke="#8a6420" stroke-width=".8" opacity=".6"/>
+      <g opacity=".98">${blades}</g>
+      <!-- tiered domed hub with jewel -->
+      <circle cx="125" cy="125" r="16" fill="url(#dome)"/>
+      <circle cx="125" cy="125" r="16" fill="none" stroke="#8a6420" stroke-width="1.2"/>
+      <circle cx="125" cy="125" r="11" fill="url(#silver)"/>
+      <circle cx="125" cy="125" r="11" fill="none" stroke="#e8c060" stroke-width=".9" opacity=".7"/>
+      <circle cx="125" cy="125" r="6.2" fill="url(#dome)"/>
+      <circle cx="125" cy="125" r="3.1" fill="url(#jewel)"/>
+      <circle cx="124" cy="124" r="1.1" fill="#fff" opacity=".9"/>
     </g>
     <circle cx="125" cy="125" r="111" fill="url(#glass)" pointer-events="none"/>
-    <circle id="ball" cx="125" cy="30" r="5.6" fill="url(#pearl)" stroke="#c9cfda" stroke-width=".4" filter="url(#ballsh)"/>`;
+    <g id="ball" filter="url(#ballsh)" transform="translate(125 30)">
+      <circle r="6" fill="url(#pearl)" stroke="#fff4cf" stroke-width=".5"/>
+      <circle cx="-1.9" cy="-2.1" r="1.8" fill="#fff" opacity=".92"/>
+    </g>`;
   const wheelRot=document.getElementById('wheelRot'), ballEl=document.getElementById('ball');
   let wheelAngle=0, ballAngle=0;
   function setWheel(deg){ wheelRot.setAttribute('transform',`rotate(${deg} 125 125)`); }
-  function setBall(deg,r){ const [x,y]=ptTop(r,deg); ballEl.setAttribute('cx',x.toFixed(2)); ballEl.setAttribute('cy',y.toFixed(2)); }
+  function setBall(deg,r){ const [x,y]=ptTop(r,deg); ballEl.setAttribute('transform',`translate(${x.toFixed(2)} ${y.toFixed(2)})`); }
   setBall(0,101);
 
   // ---------- Chips ----------
@@ -387,7 +404,10 @@
   function startTimer(){ if(timer) return;
     tleft=TSEC; tbar.classList.add('on'); tfill.style.transition='none'; tfill.style.width='100%'; ttxt.innerHTML='Hagan sus apuestas · <b>'+tleft+'s</b>';
     requestAnimationFrame(()=>{ tfill.style.transition='width '+TSEC+'s linear'; tfill.style.width='0%'; });
-    timer=setInterval(()=>{ tleft--; ttxt.innerHTML= tleft>0? 'Hagan sus apuestas · <b>'+tleft+'s</b>' : 'No va más'; if(tleft<=0){ stopTimer(); if(totalBet>0) spin(); } },1000);
+    timer=setInterval(()=>{ tleft--;
+      if(tleft>0){ ttxt.innerHTML='Hagan sus apuestas · <b>'+tleft+'s</b>'; if(tleft<=3) beep(760,.05,'sine'); }
+      else { ttxt.innerHTML='No va más'; try{speechSynthesis.cancel();}catch(e){} say('No va más'); stopTimer(); if(totalBet>0) spin(); }
+    },1000);
   }
   function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } tbar.classList.remove('on'); tfill.style.transition='none'; tfill.style.width='100%'; ttxt.textContent=''; }
 
@@ -426,9 +446,14 @@
     function frame(ts){ if(!startT) startT=ts;
       const p=Math.min((ts-startT)/dur,1), e=easeOut(p);
       wheelAngle=wheelStart+(wheelEnd-wheelStart)*e; ballAngle=ballStart+(ballEnd-ballStart)*e; setWheel(wheelAngle);
-      let radius=101;
-      if(p>0.6){ const q=(p-0.6)/0.4; const inward=101-(101-79)*q; const hop=Math.abs(Math.sin(q*Math.PI*5))*(1-q)*13; radius=Math.min(100.5, inward+hop); }
-      setBall(ballAngle,radius);
+      let radius=101, angOff=0;
+      if(p>0.55){ const q=(p-0.55)/0.45; // 0..1 drop+scatter phase
+        const base=101-(101-80)*easeOut(q);                              // ball falls inward to rest
+        const bounce=Math.exp(-3.4*q)*Math.abs(Math.sin(q*Math.PI*6.5))*(1-q)*16; // decaying bounces off diamonds
+        radius=Math.min(101.6, base+bounce);
+        angOff=Math.sin(q*Math.PI*7.5)*Math.exp(-4.2*q)*3.4;             // slight angular scatter, dies out (landing stays exact)
+      }
+      setBall(ballAngle+angOff,radius);
       if(ts-lastTick>Math.max(52,52+p*270)){ lastTick=ts; if(p<0.93) beep(1250-850*p,.02,'square'); }
       if(p<1) requestAnimationFrame(frame); else settle(result);
     }
