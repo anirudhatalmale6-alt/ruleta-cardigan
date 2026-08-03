@@ -435,38 +435,38 @@
     o.frequency.setValueAtTime(760,t); o.frequency.exponentialRampToValueAtTime(130,t+.55);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.05,t+.06); g.gain.exponentialRampToValueAtTime(.0001,t+.6);
     o.start(t); o.stop(t+.62); }catch(e){} }
-  // ---------- Background music: soft casino-lounge loop (generated, royalty-free) ----------
+  // ---------- Background music: smooth casino jazz loop (generated, royalty-free) ----------
   let musicOn=false, musicTimer=null, musicGain=null, mStep=0;
-  // jazzy lounge turnaround: Am - F - Cmaj - G, one bar each
+  const SW=0.075; // swing: push the off-beat eighths later for a jazzy shuffle
+  // jazz turnaround I-vi-ii-V with 7th chords: Cmaj7 - Am7 - Dm7 - G7, one bar each
   const PROG=[
-    {bass:[110.00,164.81], pad:[220.00,261.63,329.63]}, // Am
-    {bass:[ 87.31,130.81], pad:[174.61,220.00,261.63]}, // F
-    {bass:[130.81,196.00], pad:[261.63,329.63,392.00]}, // Cmaj
-    {bass:[ 98.00,146.83], pad:[196.00,246.94,293.66]}  // G
+    {chord:[261.63,329.63,392.00,493.88], walk:[130.81,164.81,196.00,220.00]}, // Cmaj7
+    {chord:[220.00,261.63,329.63,392.00], walk:[110.00,130.81,164.81,196.00]}, // Am7
+    {chord:[293.66,349.23,440.00,523.25], walk:[146.83,174.61,220.00,196.00]}, // Dm7
+    {chord:[196.00,246.94,293.66,349.23], walk:[ 98.00,123.47,146.83,174.61]}  // G7
   ];
-  // singable lead melody over the turnaround (8 eighth-notes per bar, null = rest)
+  // swinging lead melody (8 eighth-notes/bar, null = rest)
   const MEL=[
-    [440.00, null, 523.25, 659.25, null, 587.33, 523.25, null], // Am
-    [440.00, null, 523.25, 698.46, null, 659.25, 523.25, null], // F
-    [392.00, null, 523.25, 659.25, null, 783.99, 659.25, null], // C
-    [587.33, null, 493.88, 587.33, null, 392.00, 493.88, null]  // G
+    [523.25, null, 659.25, 587.33, null, 493.88, 523.25, null], // over Cmaj7
+    [440.00, null, 523.25, 493.88, null, 440.00, 392.00, null], // over Am7
+    [587.33, null, 698.46, 659.25, null, 587.33, 523.25, null], // over Dm7
+    [493.88, null, 587.33, 698.46, null, 587.33, 493.88, null]  // over G7 (resolves to C)
   ];
-  function mlead(freq,dur,vol){ const t=actx.currentTime;
+  function mlead(freq,dur,vol,off){ const t=actx.currentTime+(off||0);
     [ ['triangle',vol], ['sine',vol*.5] ].forEach(([ty,v])=>{ const o=actx.createOscillator(), g=actx.createGain();
       o.type=ty; o.frequency.value=freq; o.connect(g); g.connect(musicGain);
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.start(t); o.stop(t+dur+.03); }); }
-  function mtone(freq,dur,vol,type){ const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+  function mtone(freq,dur,vol,type,off){ const t=actx.currentTime+(off||0), o=actx.createOscillator(), g=actx.createGain();
     o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(musicGain);
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.03); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.start(t); o.stop(t+dur+.03); }
-  function mhat(){ const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
-    o.type='triangle'; o.frequency.value=7600; o.connect(g); g.connect(musicGain);
-    g.gain.setValueAtTime(.03,t); g.gain.exponentialRampToValueAtTime(.0001,t+.02); o.start(t); o.stop(t+.03); }
-  function mstep(){ try{ const bar=PROG[Math.floor(mStep/8)%4], e=mStep%8;
-    if(e===0){ bar.pad.forEach(f=>mtone(f,2.4,.13,'triangle')); mtone(bar.bass[0],1.1,.26,'sine'); }   // chord + bass root (beat 1)
-    if(e===4){ mtone(bar.bass[1],1.1,.22,'sine'); }                                                    // bass fifth (beat 3)
-    mtone(bar.pad[e%3]*2, .45, .07, 'sine');                                                           // gentle vibraphone arpeggio (under the lead)
-    const note=MEL[Math.floor(mStep/8)%4][e]; if(note) mlead(note, .5, .13);                           // lead melody line
-    if(e%2===1) mhat();                                                                                // soft shaker on off-beats
+  function mride(vol,off){ const t=actx.currentTime+(off||0), o=actx.createOscillator(), g=actx.createGain(); // brushed ride/shaker
+    o.type='triangle'; o.frequency.value=7200; o.connect(g); g.connect(musicGain);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+.04); o.start(t); o.stop(t+.05); }
+  function mstep(){ try{ const bi=Math.floor(mStep/8)%4, bar=PROG[bi], e=mStep%8, sw=(e%2===1)?SW:0;
+    if(e===0||e===4){ bar.chord.forEach(f=>mtone(f,1.7,.10,'triangle',sw)); }                   // soft 7th-chord comp on beats 1 & 3
+    if(e%2===0){ mtone(bar.walk[e/2],.7,.24,'sine',sw); }                                        // walking upright bass, 4 to the bar
+    const note=MEL[bi][e]; if(note) mlead(note, .55, .13, sw);                                   // swinging lead melody
+    mride(e%2===1?.05:.028, sw);                                                                 // ride pattern, accent on off-beats
     mStep++; }catch(err){} }
   function toggleMusic(){ try{ AC(); actx.resume(); }catch(e){}
     musicOn=!musicOn;
