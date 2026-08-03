@@ -188,35 +188,58 @@
 
   // ---------- European wheel ----------
   function ptTop(r,phi){ const a=phi*Math.PI/180; return [C + r*Math.sin(a), C - r*Math.cos(a)]; }
-  function pockColor(n){ return n===0?'#0f8a4a':(reds.has(n)?'#c41f2f':'#161a20'); }
+  function pockColor(n){ return n===0?'url(#pkGreen)':(reds.has(n)?'url(#pkRed)':'url(#pkBlack)'); }
   let seg=''; const rOut=95, rIn=63, rTxt=79;
   for(let i=0;i<N;i++){ const a0=i*step, a1=(i+1)*step, n=order[i];
     const [ox0,oy0]=ptTop(rOut,a0), [ox1,oy1]=ptTop(rOut,a1); const [ix1,iy1]=ptTop(rIn,a1), [ix0,iy0]=ptTop(rIn,a0);
-    seg+=`<path d="M${ox0.toFixed(2)} ${oy0.toFixed(2)} A${rOut} ${rOut} 0 0 1 ${ox1.toFixed(2)} ${oy1.toFixed(2)} L${ix1.toFixed(2)} ${iy1.toFixed(2)} A${rIn} ${rIn} 0 0 0 ${ix0.toFixed(2)} ${iy0.toFixed(2)} Z" fill="${pockColor(n)}" stroke="rgba(0,0,0,.35)" stroke-width=".4"/>`;
+    seg+=`<path d="M${ox0.toFixed(2)} ${oy0.toFixed(2)} A${rOut} ${rOut} 0 0 1 ${ox1.toFixed(2)} ${oy1.toFixed(2)} L${ix1.toFixed(2)} ${iy1.toFixed(2)} A${rIn} ${rIn} 0 0 0 ${ix0.toFixed(2)} ${iy0.toFixed(2)} Z" fill="${pockColor(n)}" stroke="rgba(0,0,0,.45)" stroke-width=".4"/>`;
+    // metallic fret separator (bevel: bright edge + dark edge)
     const [fx,fy]=ptTop(rOut,a0), [gx,gy]=ptTop(rIn,a0);
-    seg+=`<line x1="${fx.toFixed(2)}" y1="${fy.toFixed(2)}" x2="${gx.toFixed(2)}" y2="${gy.toFixed(2)}" stroke="#cbb06a" stroke-width=".7" opacity=".55"/>`;
+    seg+=`<line x1="${fx.toFixed(2)}" y1="${fy.toFixed(2)}" x2="${gx.toFixed(2)}" y2="${gy.toFixed(2)}" stroke="url(#fret)" stroke-width="1.1"/>`;
+    seg+=`<line x1="${fx.toFixed(2)}" y1="${fy.toFixed(2)}" x2="${gx.toFixed(2)}" y2="${gy.toFixed(2)}" stroke="rgba(255,255,255,.5)" stroke-width=".35"/>`;
     const mid=(i+0.5)*step, [tx,ty]=ptTop(rTxt,mid);
-    seg+=`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" fill="#fff" font-size="7.5" font-weight="700" text-anchor="middle" dominant-baseline="central" transform="rotate(${mid.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)})">${n}</text>`;
+    seg+=`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" fill="#fff" font-size="7.5" font-weight="800" text-anchor="middle" dominant-baseline="central" stroke="#000" stroke-width=".7" paint-order="stroke" transform="rotate(${mid.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)})">${n}</text>`;
   }
-  let diamonds=''; for(let d=0; d<8; d++){ const [dx,dy]=ptTop(103, d*45);
-    diamonds+=`<rect x="${(dx-3).toFixed(2)}" y="${(dy-3).toFixed(2)}" width="6" height="6" fill="#d9c17e" transform="rotate(45 ${dx.toFixed(2)} ${dy.toFixed(2)})" opacity=".85"/>`; }
+  // pocket depth shading + inner/outer walls (drawn over segments, still rotates)
+  seg+=`<circle cx="125" cy="125" r="95" fill="url(#pockShade)" pointer-events="none"/>`;
+  seg+=`<circle cx="125" cy="125" r="95" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.4"/>`;
+  seg+=`<circle cx="125" cy="125" r="63.5" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="1.6"/>`;
+  seg+=`<circle cx="125" cy="125" r="62.4" fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".6"/>`;
+  // 3D metallic diamond deflectors, sit on the ball track
+  let diamonds=''; for(let d=0; d<8; d++){ const [dx,dy]=ptTop(104.5, d*45);
+    diamonds+=`<g transform="rotate(45 ${dx.toFixed(2)} ${dy.toFixed(2)})">`+
+      `<rect x="${(dx-3.6).toFixed(2)}" y="${(dy-3.6).toFixed(2)}" width="7.2" height="7.2" rx="1.1" fill="url(#diam)" stroke="#5e4416" stroke-width=".5"/>`+
+      `<rect x="${(dx-3).toFixed(2)}" y="${(dy-3).toFixed(2)}" width="3.2" height="3.2" rx=".8" fill="#fff" opacity=".55"/></g>`; }
   document.getElementById('wsvg').innerHTML=`
     <defs>
-      <radialGradient id="rim" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#f4dd9a"/><stop offset="55%" stop-color="#e8c060"/><stop offset="100%" stop-color="#8a6420"/></radialGradient>
-      <radialGradient id="cone" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#39415a"/><stop offset="60%" stop-color="#161a24"/><stop offset="100%" stop-color="#0a0d14"/></radialGradient>
-      <radialGradient id="turret" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#f4dd9a"/><stop offset="50%" stop-color="#c79a3a"/><stop offset="100%" stop-color="#6e4e18"/></radialGradient>
-      <radialGradient id="pearl" cx="38%" cy="32%" r="70%"><stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#dfe4ec"/><stop offset="100%" stop-color="#aab2c0"/></radialGradient>
+      <radialGradient id="bezel" cx="40%" cy="30%" r="72%"><stop offset="0%" stop-color="#fff6d2"/><stop offset="30%" stop-color="#f0d47e"/><stop offset="62%" stop-color="#c39a3e"/><stop offset="86%" stop-color="#8a6522"/><stop offset="100%" stop-color="#513913"/></radialGradient>
+      <radialGradient id="track" cx="40%" cy="30%" r="75%"><stop offset="0%" stop-color="#3a3f4c"/><stop offset="55%" stop-color="#20242e"/><stop offset="100%" stop-color="#0c0e14"/></radialGradient>
+      <radialGradient id="cone" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#454d68"/><stop offset="55%" stop-color="#1b2030"/><stop offset="100%" stop-color="#090c13"/></radialGradient>
+      <radialGradient id="pkGreen" cx="50%" cy="18%" r="95%"><stop offset="0%" stop-color="#19a659"/><stop offset="100%" stop-color="#0a6636"/></radialGradient>
+      <radialGradient id="pkRed" cx="50%" cy="18%" r="95%"><stop offset="0%" stop-color="#d8323f"/><stop offset="100%" stop-color="#8f1620"/></radialGradient>
+      <radialGradient id="pkBlack" cx="50%" cy="18%" r="95%"><stop offset="0%" stop-color="#2b303c"/><stop offset="100%" stop-color="#0c0e14"/></radialGradient>
+      <radialGradient id="pockShade" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#000" stop-opacity="0"/><stop offset="72%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".5"/></radialGradient>
+      <linearGradient id="fret" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8c8577"/><stop offset="50%" stop-color="#e8e2d2"/><stop offset="100%" stop-color="#6e6656"/></linearGradient>
+      <radialGradient id="diam" cx="38%" cy="28%" r="72%"><stop offset="0%" stop-color="#fff2c4"/><stop offset="50%" stop-color="#d9b45e"/><stop offset="100%" stop-color="#8a6420"/></radialGradient>
+      <radialGradient id="pearl" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#ffffff"/><stop offset="55%" stop-color="#e2e7ef"/><stop offset="100%" stop-color="#9aa3b2"/></radialGradient>
       <radialGradient id="dome" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#fdf3d0"/><stop offset="45%" stop-color="#d9b45e"/><stop offset="100%" stop-color="#78521a"/></radialGradient>
       <radialGradient id="silver" cx="42%" cy="34%" r="66%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#c6cdd8"/><stop offset="100%" stop-color="#6d7480"/></radialGradient>
+      <radialGradient id="glass" cx="34%" cy="26%" r="70%"><stop offset="0%" stop-color="#fff" stop-opacity=".38"/><stop offset="42%" stop-color="#fff" stop-opacity=".06"/><stop offset="60%" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <filter id="ballsh" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#000" flood-opacity=".55"/></filter>
     </defs>
-    <circle cx="125" cy="125" r="123" fill="url(#rim)"/><circle cx="125" cy="125" r="112" fill="#120d05"/><circle cx="125" cy="125" r="110" fill="#0d1017"/>
-    ${diamonds}<circle cx="125" cy="125" r="96" fill="#0a0d13"/>
+    <circle cx="125" cy="125" r="124" fill="url(#bezel)"/>
+    <circle cx="125" cy="125" r="124" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
+    <circle cx="125" cy="125" r="114" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="2.5"/>
+    <circle cx="125" cy="125" r="111" fill="url(#track)"/>
+    <circle cx="125" cy="125" r="111" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+    <circle cx="125" cy="125" r="97" fill="#080a10"/>
+    ${diamonds}
     <g id="wheelRot">${seg}
       <circle cx="125" cy="125" r="63" fill="url(#cone)"/>
       <circle cx="125" cy="125" r="41" fill="#0a0d13"/>
       <circle cx="125" cy="125" r="40" fill="none" stroke="#caa54a" stroke-width="1" opacity=".55"/>
       <!-- turret: crossed metallic arms (spindle handle, top view) -->
-      <g opacity=".95">
+      <g opacity=".97">
         <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(45 125 125)"/>
         <ellipse cx="125" cy="125" rx="38" ry="7.5" fill="url(#silver)" transform="rotate(-45 125 125)"/>
       </g>
@@ -228,7 +251,8 @@
       <circle cx="125" cy="125" r="8.5" fill="url(#dome)"/>
       <circle cx="121" cy="121" r="3" fill="#fff" opacity=".85"/>
     </g>
-    <circle id="ball" cx="125" cy="30" r="5.6" fill="url(#pearl)" stroke="#c9cfda" stroke-width=".4"/>`;
+    <circle cx="125" cy="125" r="111" fill="url(#glass)" pointer-events="none"/>
+    <circle id="ball" cx="125" cy="30" r="5.6" fill="url(#pearl)" stroke="#c9cfda" stroke-width=".4" filter="url(#ballsh)"/>`;
   const wheelRot=document.getElementById('wheelRot'), ballEl=document.getElementById('ball');
   let wheelAngle=0, ballAngle=0;
   function setWheel(deg){ wheelRot.setAttribute('transform',`rotate(${deg} 125 125)`); }
