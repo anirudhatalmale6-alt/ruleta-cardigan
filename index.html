@@ -134,6 +134,7 @@
 </style>
 </head>
 <body>
+  <audio id="bgm" src="midnight-vamp.mp3" loop preload="none"></audio>
   <div class="topbar">
     <div class="brand"><div class="dot"></div><div class="nm"><b>RULETA CARDIGAN</b><small>Ruleta Europea</small></div></div>
     <div class="topright">
@@ -468,11 +469,16 @@
     const note=MEL[bi][e]; if(note) mlead(note, .55, .13, sw);                                   // swinging lead melody
     mride(e%2===1?.05:.028, sw);                                                                 // ride pattern, accent on off-beats
     mStep++; }catch(err){} }
-  function toggleMusic(){ try{ AC(); actx.resume(); }catch(e){}
-    musicOn=!musicOn;
-    if(musicOn){ if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
-      mStep=0; mstep(); musicTimer=setInterval(mstep,320); btnMusic.classList.add('on'); }
-    else { if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } btnMusic.classList.remove('on'); } }
+  // Background music = client's track "Midnight Vamp", looped. (Generated jazz loop kept above as fallback if the file can't play.)
+  const bgm=document.getElementById('bgm'); bgm.volume=.55;
+  function startGenerated(){ try{ AC(); actx.resume(); }catch(e){}
+    if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
+    mStep=0; mstep(); if(!musicTimer) musicTimer=setInterval(mstep,320); }
+  function stopGenerated(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
+  function toggleMusic(){ musicOn=!musicOn;
+    if(musicOn){ btnMusic.classList.add('on');
+      const p=bgm.play(); if(p&&p.catch) p.catch(()=>{ if(musicOn) startGenerated(); }); }   // fall back to generated loop if track blocked
+    else { btnMusic.classList.remove('on'); bgm.pause(); stopGenerated(); } }
   const btnMusic=document.getElementById('btnMusic'); btnMusic.addEventListener('click',toggleMusic);
   let esVoice=null;
   function pickVoice(){ const vs=speechSynthesis.getVoices(); esVoice = vs.find(v=>/^es(-|_)?/i.test(v.lang)) || vs.find(v=>/es/i.test(v.lang)) || null; }
