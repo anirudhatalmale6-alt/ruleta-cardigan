@@ -435,16 +435,31 @@
     o.frequency.setValueAtTime(760,t); o.frequency.exponentialRampToValueAtTime(130,t+.55);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.05,t+.06); g.gain.exponentialRampToValueAtTime(.0001,t+.6);
     o.start(t); o.stop(t+.62); }catch(e){} }
-  // ---------- Background music (soft looping chord pad, generated) ----------
-  let musicOn=false, musicTimer=null, musicGain=null, chordIx=0;
-  const CHORDS=[[196.00,246.94,293.66],[220.00,277.18,329.63],[164.81,207.65,246.94],[174.61,220.00,261.63]];
-  function playChord(){ try{ AC(); const t=actx.currentTime, ch=CHORDS[chordIx%CHORDS.length]; chordIx++;
-    ch.forEach((f,i)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type=i===0?'triangle':'sine'; o.frequency.value=f;
-      o.connect(g); g.connect(musicGain); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.5,t+.5); g.gain.linearRampToValueAtTime(.0001,t+2.6); o.start(t); o.stop(t+2.7); }); }catch(e){} }
+  // ---------- Background music: soft casino-lounge loop (generated, royalty-free) ----------
+  let musicOn=false, musicTimer=null, musicGain=null, mStep=0;
+  // jazzy lounge turnaround: Am - F - Cmaj - G, one bar each
+  const PROG=[
+    {bass:[110.00,164.81], pad:[220.00,261.63,329.63]}, // Am
+    {bass:[ 87.31,130.81], pad:[174.61,220.00,261.63]}, // F
+    {bass:[130.81,196.00], pad:[261.63,329.63,392.00]}, // Cmaj
+    {bass:[ 98.00,146.83], pad:[196.00,246.94,293.66]}  // G
+  ];
+  function mtone(freq,dur,vol,type){ const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(musicGain);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.03); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.start(t); o.stop(t+dur+.03); }
+  function mhat(){ const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type='triangle'; o.frequency.value=7600; o.connect(g); g.connect(musicGain);
+    g.gain.setValueAtTime(.03,t); g.gain.exponentialRampToValueAtTime(.0001,t+.02); o.start(t); o.stop(t+.03); }
+  function mstep(){ try{ const bar=PROG[Math.floor(mStep/8)%4], e=mStep%8;
+    if(e===0){ bar.pad.forEach(f=>mtone(f,2.4,.13,'triangle')); mtone(bar.bass[0],1.1,.26,'sine'); }   // chord + bass root (beat 1)
+    if(e===4){ mtone(bar.bass[1],1.1,.22,'sine'); }                                                    // bass fifth (beat 3)
+    mtone(bar.pad[e%3]*2, .55, .09, 'sine');                                                           // gentle vibraphone arpeggio
+    if(e%2===1) mhat();                                                                                // soft shaker on off-beats
+    mStep++; }catch(err){} }
   function toggleMusic(){ try{ AC(); actx.resume(); }catch(e){}
     musicOn=!musicOn;
-    if(musicOn){ if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.05; musicGain.connect(actx.destination); }
-      chordIx=0; playChord(); musicTimer=setInterval(playChord,2600); btnMusic.classList.add('on'); }
+    if(musicOn){ if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
+      mStep=0; mstep(); musicTimer=setInterval(mstep,320); btnMusic.classList.add('on'); }
     else { if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } btnMusic.classList.remove('on'); } }
   const btnMusic=document.getElementById('btnMusic'); btnMusic.addEventListener('click',toggleMusic);
   let esVoice=null;
