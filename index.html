@@ -470,7 +470,7 @@
     mride(e%2===1?.05:.028, sw);                                                                 // ride pattern, accent on off-beats
     mStep++; }catch(err){} }
   // Background music = client's track "Midnight Vamp", looped. (Generated jazz loop kept above as fallback if the file can't play.)
-  const bgm=document.getElementById('bgm'); bgm.volume=.55;
+  const bgm=document.getElementById('bgm'); bgm.volume=.25;
   function startGenerated(){ try{ AC(); actx.resume(); }catch(e){}
     if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
     mStep=0; mstep(); if(!musicTimer) musicTimer=setInterval(mstep,320); }
@@ -480,6 +480,17 @@
       const p=bgm.play(); if(p&&p.catch) p.catch(()=>{ if(musicOn) startGenerated(); }); }   // fall back to generated loop if track blocked
     else { btnMusic.classList.remove('on'); bgm.pause(); stopGenerated(); } }
   const btnMusic=document.getElementById('btnMusic'); btnMusic.addEventListener('click',toggleMusic);
+  // Auto-start music on load. Browsers block autoplay-with-sound until a user gesture,
+  // so if play() is blocked we start it on the player's first tap anywhere (button excluded).
+  (function autoStartMusic(){ musicOn=true; btnMusic.classList.add('on');
+    const kick=()=>{ if(!musicOn) return; const q=bgm.play(); if(q&&q.catch) q.catch(()=>{ if(musicOn) startGenerated(); }); };
+    const onFirstGesture=(ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#btnMusic')) return; // don't fight the toggle
+      document.removeEventListener('pointerdown',onFirstGesture,true); document.removeEventListener('touchstart',onFirstGesture,true);
+      kick(); };
+    const p=bgm.play();
+    if(p&&p.then){ p.then(()=>{}).catch(()=>{ document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }); }
+    else { document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }
+  })();
   let esVoice=null;
   function pickVoice(){ const vs=speechSynthesis.getVoices(); esVoice = vs.find(v=>/^es(-|_)?/i.test(v.lang)) || vs.find(v=>/es/i.test(v.lang)) || null; }
   if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
