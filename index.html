@@ -134,7 +134,7 @@
 </style>
 </head>
 <body>
-  <audio id="bgm" src="midnight-vamp.mp3" loop preload="none"></audio>
+  <audio id="bgm" src="midnight-vamp.mp3" loop preload="auto"></audio>
   <div class="topbar">
     <div class="brand"><div class="dot"></div><div class="nm"><b>RULETA CARDIGAN</b><small>Ruleta Europea</small></div></div>
     <div class="topright">
@@ -469,24 +469,30 @@
     const note=MEL[bi][e]; if(note) mlead(note, .55, .13, sw);                                   // swinging lead melody
     mride(e%2===1?.05:.028, sw);                                                                 // ride pattern, accent on off-beats
     mStep++; }catch(err){} }
-  // Background music = client's track "Midnight Vamp", looped. (Generated jazz loop kept above as fallback if the file can't play.)
+  // Background music = client's track "Midnight Vamp", looped. Generated jazz loop is a LAST-RESORT
+  // fallback ONLY if the file itself errors (404/decode) — never as a substitute while it's still loading.
   const bgm=document.getElementById('bgm'); bgm.volume=.25;
   function startGenerated(){ try{ AC(); actx.resume(); }catch(e){}
     if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
     mStep=0; mstep(); if(!musicTimer) musicTimer=setInterval(mstep,320); }
   function stopGenerated(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
+  // Play the real track. If play() is rejected only because it isn't buffered yet, wait for it and retry —
+  // do NOT drop to the generated loop (that's what made it "revert" to the old song on slow mobile).
+  function playTrack(){ if(!musicOn) return; const p=bgm.play();
+    if(p&&p.catch) p.catch(()=>{ if(!musicOn) return;
+      if(bgm.error){ startGenerated(); return; }                 // file truly broken -> last resort
+      const retry=()=>{ bgm.removeEventListener('canplay',retry); if(musicOn){ const q=bgm.play(); if(q&&q.catch) q.catch(()=>{ if(musicOn&&bgm.error) startGenerated(); }); } };
+      bgm.addEventListener('canplay',retry); }); }
   function toggleMusic(){ musicOn=!musicOn;
-    if(musicOn){ btnMusic.classList.add('on');
-      const p=bgm.play(); if(p&&p.catch) p.catch(()=>{ if(musicOn) startGenerated(); }); }   // fall back to generated loop if track blocked
+    if(musicOn){ btnMusic.classList.add('on'); playTrack(); }
     else { btnMusic.classList.remove('on'); bgm.pause(); stopGenerated(); } }
   const btnMusic=document.getElementById('btnMusic'); btnMusic.addEventListener('click',toggleMusic);
   // Auto-start music on load. Browsers block autoplay-with-sound until a user gesture,
   // so if play() is blocked we start it on the player's first tap anywhere (button excluded).
   (function autoStartMusic(){ musicOn=true; btnMusic.classList.add('on');
-    const kick=()=>{ if(!musicOn) return; const q=bgm.play(); if(q&&q.catch) q.catch(()=>{ if(musicOn) startGenerated(); }); };
     const onFirstGesture=(ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#btnMusic')) return; // don't fight the toggle
       document.removeEventListener('pointerdown',onFirstGesture,true); document.removeEventListener('touchstart',onFirstGesture,true);
-      kick(); };
+      playTrack(); };
     const p=bgm.play();
     if(p&&p.then){ p.then(()=>{}).catch(()=>{ document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }); }
     else { document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }
