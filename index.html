@@ -31,6 +31,10 @@
   .brand .nm{display:flex;flex-direction:column;line-height:1.05;}
   .brand .nm b{background:linear-gradient(180deg,var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
   .brand .nm small{font-size:9px;color:#8794ab;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+  .topright{display:flex;align-items:center;gap:12px;}
+  .musicbtn{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);color:#9aa6bd;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
+  .musicbtn.on{color:#12151b;background:linear-gradient(180deg,#ffe89a,#e8c060);border-color:#e8c060;box-shadow:0 0 12px rgba(232,192,96,.5);}
   .balance{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;}
   .balance .lbl{font-size:10px;color:#9aa6bd;text-transform:uppercase;letter-spacing:1px;}
   .balance .amt{font-size:17px;font-weight:800;color:var(--gold-2);}
@@ -132,12 +136,17 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="dot"></div><div class="nm"><b>RULETA CARDIGAN</b><small>Ruleta Europea</small></div></div>
-    <div class="balance"><div class="lbl">Saldo</div><div class="amt" id="bal">$ 8.450,00</div></div>
+    <div class="topright">
+      <button class="musicbtn" id="btnMusic" aria-label="Música de fondo" title="Música de fondo">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 17.5V6l10-2v9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="2.6" fill="currentColor"/><circle cx="16.5" cy="15.5" r="2.6" fill="currentColor"/></svg>
+      </button>
+      <div class="balance"><div class="lbl">Saldo</div><div class="amt" id="bal">$ 8.450,00</div></div>
+    </div>
   </div>
 
   <div class="stage">
     <div class="wheel-glow"></div>
-    <div class="wheel-box"><div class="pointer"></div><svg id="wsvg" viewBox="0 0 250 250" aria-hidden="true"></svg></div>
+    <div class="wheel-box"><svg id="wsvg" viewBox="0 0 250 250" aria-hidden="true"></svg></div>
   </div>
 
   <div class="result-row">
@@ -413,9 +422,31 @@
 
   // ---------- Audio + Voice ----------
   let actx;
-  function beep(freq,dur,type){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  function AC(){ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+  function beep(freq,dur,type){ try{ AC();
     const o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq; g.gain.value=.06;
     o.connect(g); g.connect(actx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+dur); o.stop(actx.currentTime+dur); }catch(e){} }
+  // crisp ball-on-track tick (wood-block style)
+  function tick(freq){ try{ AC(); const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=freq;
+    o.connect(g); g.connect(actx.destination); const t=actx.currentTime; g.gain.setValueAtTime(.05,t); g.gain.exponentialRampToValueAtTime(.0001,t+.03); o.start(t); o.stop(t+.035); }catch(e){} }
+  // launch whoosh: descending sweep
+  function whoosh(){ try{ AC(); const o=actx.createOscillator(), g=actx.createGain(); o.type='sine';
+    o.connect(g); g.connect(actx.destination); const t=actx.currentTime;
+    o.frequency.setValueAtTime(760,t); o.frequency.exponentialRampToValueAtTime(130,t+.55);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.05,t+.06); g.gain.exponentialRampToValueAtTime(.0001,t+.6);
+    o.start(t); o.stop(t+.62); }catch(e){} }
+  // ---------- Background music (soft looping chord pad, generated) ----------
+  let musicOn=false, musicTimer=null, musicGain=null, chordIx=0;
+  const CHORDS=[[196.00,246.94,293.66],[220.00,277.18,329.63],[164.81,207.65,246.94],[174.61,220.00,261.63]];
+  function playChord(){ try{ AC(); const t=actx.currentTime, ch=CHORDS[chordIx%CHORDS.length]; chordIx++;
+    ch.forEach((f,i)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type=i===0?'triangle':'sine'; o.frequency.value=f;
+      o.connect(g); g.connect(musicGain); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.5,t+.5); g.gain.linearRampToValueAtTime(.0001,t+2.6); o.start(t); o.stop(t+2.7); }); }catch(e){} }
+  function toggleMusic(){ try{ AC(); actx.resume(); }catch(e){}
+    musicOn=!musicOn;
+    if(musicOn){ if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.05; musicGain.connect(actx.destination); }
+      chordIx=0; playChord(); musicTimer=setInterval(playChord,2600); btnMusic.classList.add('on'); }
+    else { if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } btnMusic.classList.remove('on'); } }
+  const btnMusic=document.getElementById('btnMusic'); btnMusic.addEventListener('click',toggleMusic);
   let esVoice=null;
   function pickVoice(){ const vs=speechSynthesis.getVoices(); esVoice = vs.find(v=>/^es(-|_)?/i.test(v.lang)) || vs.find(v=>/es/i.test(v.lang)) || null; }
   if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
@@ -437,24 +468,29 @@
     document.querySelectorAll('[data-bet]').forEach(c=>c.classList.remove('win'));
     if(actx) actx.resume();
     const result=order[Math.floor(Math.random()*N)], idx=idxOf[result];
-    const wheelStart=wheelAngle, ballStart=ballAngle, wheelTurns=4, ballTurns=6;
-    let wheelEnd=wheelStart+360*wheelTurns;
-    const needMod=((-(idx+0.5)*step)%360+360)%360, curMod=((wheelEnd%360)+360)%360;
-    wheelEnd += ((needMod-curMod)+360)%360;
-    let ballEnd=ballStart-360*ballTurns; ballEnd=Math.floor(ballEnd/360)*360;
-    const dur=4800; let startT=null, lastTick=0; beep(90,.15,'sawtooth');
+    const wheelTurns=4, ballTurns=6, wheelStart=wheelAngle;
+    // wheel stops at a RANDOM orientation (no fixed pointer) → winner ends up anywhere on the wheel
+    const wheelEnd=wheelStart+360*wheelTurns+Math.random()*360;
+    const finalMod=((wheelEnd%360)+360)%360;
+    const restAngle=(idx+0.5)*step+finalMod;                       // where the winning pocket sits at the end
+    // ball ALWAYS launches from the same side (top) and comes to rest exactly on the winning pocket, wherever it landed
+    const ballStart=0; ballAngle=0; setBall(0,101);
+    let ballEnd=ballStart-360*ballTurns;
+    const bMod=((ballEnd%360)+360)%360, tMod=((restAngle%360)+360)%360;
+    ballEnd -= ((bMod-tMod)+360)%360;
+    const dur=4900; let startT=null, lastTick=0; whoosh();
     function frame(ts){ if(!startT) startT=ts;
       const p=Math.min((ts-startT)/dur,1), e=easeOut(p);
       wheelAngle=wheelStart+(wheelEnd-wheelStart)*e; ballAngle=ballStart+(ballEnd-ballStart)*e; setWheel(wheelAngle);
       let radius=101, angOff=0;
-      if(p>0.55){ const q=(p-0.55)/0.45; // 0..1 drop+scatter phase
+      if(p>0.5){ const q=(p-0.5)/0.5; // 0..1 drop+scatter phase (starts earlier → more bouncing)
         const base=101-(101-80)*easeOut(q);                              // ball falls inward to rest
-        const bounce=Math.exp(-3.4*q)*Math.abs(Math.sin(q*Math.PI*6.5))*(1-q)*16; // decaying bounces off diamonds
-        radius=Math.min(101.6, base+bounce);
-        angOff=Math.sin(q*Math.PI*7.5)*Math.exp(-4.2*q)*3.4;             // slight angular scatter, dies out (landing stays exact)
+        const bounce=Math.exp(-2.5*q)*Math.abs(Math.sin(q*Math.PI*8.5))*(1-q)*21; // more, higher decaying bounces off diamonds
+        radius=Math.min(102, base+bounce);
+        angOff=Math.sin(q*Math.PI*9.5)*Math.exp(-3.1*q)*4.4;             // stronger angular scatter, dies out (landing stays exact)
       }
       setBall(ballAngle+angOff,radius);
-      if(ts-lastTick>Math.max(52,52+p*270)){ lastTick=ts; if(p<0.93) beep(1250-850*p,.02,'square'); }
+      if(ts-lastTick>Math.max(48,48+p*250)){ lastTick=ts; if(p<0.94) tick(720+Math.random()*260); }
       if(p<1) requestAnimationFrame(frame); else settle(result);
     }
     requestAnimationFrame(frame);
