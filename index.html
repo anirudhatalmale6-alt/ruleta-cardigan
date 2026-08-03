@@ -444,6 +444,17 @@
     {bass:[130.81,196.00], pad:[261.63,329.63,392.00]}, // Cmaj
     {bass:[ 98.00,146.83], pad:[196.00,246.94,293.66]}  // G
   ];
+  // singable lead melody over the turnaround (8 eighth-notes per bar, null = rest)
+  const MEL=[
+    [440.00, null, 523.25, 659.25, null, 587.33, 523.25, null], // Am
+    [440.00, null, 523.25, 698.46, null, 659.25, 523.25, null], // F
+    [392.00, null, 523.25, 659.25, null, 783.99, 659.25, null], // C
+    [587.33, null, 493.88, 587.33, null, 392.00, 493.88, null]  // G
+  ];
+  function mlead(freq,dur,vol){ const t=actx.currentTime;
+    [ ['triangle',vol], ['sine',vol*.5] ].forEach(([ty,v])=>{ const o=actx.createOscillator(), g=actx.createGain();
+      o.type=ty; o.frequency.value=freq; o.connect(g); g.connect(musicGain);
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.start(t); o.stop(t+dur+.03); }); }
   function mtone(freq,dur,vol,type){ const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
     o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(musicGain);
     g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.03); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.start(t); o.stop(t+dur+.03); }
@@ -453,7 +464,8 @@
   function mstep(){ try{ const bar=PROG[Math.floor(mStep/8)%4], e=mStep%8;
     if(e===0){ bar.pad.forEach(f=>mtone(f,2.4,.13,'triangle')); mtone(bar.bass[0],1.1,.26,'sine'); }   // chord + bass root (beat 1)
     if(e===4){ mtone(bar.bass[1],1.1,.22,'sine'); }                                                    // bass fifth (beat 3)
-    mtone(bar.pad[e%3]*2, .55, .09, 'sine');                                                           // gentle vibraphone arpeggio
+    mtone(bar.pad[e%3]*2, .45, .07, 'sine');                                                           // gentle vibraphone arpeggio (under the lead)
+    const note=MEL[Math.floor(mStep/8)%4][e]; if(note) mlead(note, .5, .13);                           // lead melody line
     if(e%2===1) mhat();                                                                                // soft shaker on off-beats
     mStep++; }catch(err){} }
   function toggleMusic(){ try{ AC(); actx.resume(); }catch(e){}
