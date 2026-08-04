@@ -290,10 +290,13 @@
   function toneClass(v){ if(v>=100)return'tone100'; if(v>=50)return'tone50'; if(v>=20)return'tone20'; if(v>=10)return'tone10'; if(v>=5)return'tone5'; if(v>=2)return'tone2'; return'tone1'; }
   const CHIP_VALUES=[1,2,5,10,20,50]; let curChip=5;
   const chipsEl=document.getElementById('chips');
-  CHIP_VALUES.forEach(v=>{ const el=document.createElement('div');
-    el.className='chip '+toneClass(v)+(v===curChip?' sel':''); el.dataset.v=v; el.innerHTML=`<span class="face">${v}</span>`;
-    el.addEventListener('click',()=>{ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); curChip=v; document.getElementById('curChip').textContent='$'+v; });
-    chipsEl.appendChild(el); });
+  function buildChips(){ chipsEl.innerHTML='';
+    CHIP_VALUES.forEach(v=>{ const el=document.createElement('div');
+      el.className='chip '+toneClass(v)+(v===curChip?' sel':''); el.dataset.v=v; el.innerHTML=`<span class="face">${v}</span>`;
+      el.addEventListener('click',()=>{ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); curChip=v; document.getElementById('curChip').textContent='$'+v; });
+      chipsEl.appendChild(el); });
+    void chipsEl.offsetHeight; } // force reflow so the conic-gradient re-rasterizes crisp after a rotate
+  buildChips();
 
   // ---------- Numbers into board ----------
   const board=document.getElementById('board'); const cellEls={}; cellEls[0]=document.querySelector('.zerocell');
@@ -471,9 +474,9 @@
     mStep++; }catch(err){} }
   // Background music = client's track "Midnight Vamp", looped. Generated jazz loop is a LAST-RESORT
   // fallback ONLY if the file itself errors (404/decode) — never as a substitute while it's still loading.
-  const bgm=document.getElementById('bgm'); bgm.volume=.25;
+  const bgm=document.getElementById('bgm'); bgm.volume=.12;
   function startGenerated(){ try{ AC(); actx.resume(); }catch(e){}
-    if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.32; musicGain.connect(actx.destination); }
+    if(!musicGain){ musicGain=actx.createGain(); musicGain.gain.value=.16; musicGain.connect(actx.destination); }
     mStep=0; mstep(); if(!musicTimer) musicTimer=setInterval(mstep,320); }
   function stopGenerated(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
   // Play the real track. If play() is rejected only because it isn't buffered yet, wait for it and retry —
@@ -562,7 +565,9 @@
   }
   document.getElementById('btnSpin').addEventListener('click',spin);
   window.addEventListener('load',()=>{ buildHotspots(); });
-  let rz; window.addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(buildHotspots,200); });
+  let rz; function onResize(){ clearTimeout(rz); rz=setTimeout(()=>{ buildHotspots(); buildChips(); },200); }
+  window.addEventListener('resize',onResize);
+  window.addEventListener('orientationchange',()=>{ setTimeout(onResize,60); });
 </script>
 </body>
 </html>
