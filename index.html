@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Ruleta Cardigan</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -65,7 +65,7 @@
   .timertxt{text-align:center;font-size:11px;color:#9aa6bd;height:14px;margin-top:1px;} .timertxt b{color:var(--gold-2);}
 
   /* ---- felt table with side bets (classic layout) ---- */
-  .felt{margin:8px auto;padding:9px;border-radius:14px;max-width:372px;width:calc(100% - 20px);
+  .felt{margin:8px auto;padding:9px;border-radius:14px;max-width:372px;width:calc(100% - 20px);touch-action:manipulation;
     background: repeating-linear-gradient(45deg, rgba(0,0,0,.045) 0 3px, transparent 3px 6px),
       radial-gradient(130% 100% at 50% 0%, #128a52, #0a5230 72%);
     box-shadow:inset 0 0 0 2px rgba(232,192,96,.45), inset 0 0 34px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);}
@@ -96,28 +96,22 @@
   .hot.pt{width:20px;height:20px;} .hot.line{border-radius:5px;} .hot:hover{background:rgba(232,192,96,.30);}
   .hint{text-align:center;font-size:10.5px;color:#8794ab;margin:8px 4px 0;line-height:1.4;}
 
+  /* chips rendered as inline SVG (crisp on iOS - avoids the conic-gradient raster blur) */
   .chip{width:44px;height:44px;border-radius:50%;position:relative;cursor:pointer;flex:0 0 auto;
-    background:repeating-conic-gradient(var(--e) 0 18deg, #f4f6fa 18deg 36deg);
-    box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.12);
+    box-shadow:0 4px 10px rgba(0,0,0,.45);touch-action:manipulation;
     display:flex;align-items:center;justify-content:center;transition:transform .1s;}
-  .chip .face{width:66%;height:66%;border-radius:50%; background:radial-gradient(circle at 40% 34%,var(--fl),var(--fd));
-    color:var(--tc);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;
-    box-shadow:inset 0 0 0 2px rgba(255,255,255,.35), 0 1px 2px rgba(0,0,0,.35);}
+  .chip svg,.stake svg{display:block;width:100%;height:100%;}
   .chip:active{transform:scale(.9);}
   .chip.sel{outline:3px solid var(--gold-2);outline-offset:2px;transform:translateY(-3px);}
 
   .stake{width:25px;height:25px;border-radius:50%;position:absolute;z-index:5;pointer-events:none;
-    background:repeating-conic-gradient(var(--e) 0 22.5deg, #f4f6fa 22.5deg 45deg);
-    box-shadow:0 2px 6px rgba(0,0,0,.6), inset 0 0 0 1.5px rgba(0,0,0,.15);
+    box-shadow:0 2px 6px rgba(0,0,0,.6);
     display:flex;align-items:center;justify-content:center;}
-  .stake .f{width:64%;height:64%;border-radius:50%; background:radial-gradient(circle at 40% 34%,var(--fl),var(--fd));
-    color:var(--tc);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;
-    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);}
   .tile > .stake{top:50%;left:50%;transform:translate(-50%,-50%);}
 
   .chips{display:flex;justify-content:center;gap:8px;padding:12px 8px 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;} .chips::-webkit-scrollbar{display:none;}
   .actions{display:flex;gap:8px;padding:4px 14px 22px;}
-  .btn{height:50px;border:none;border-radius:13px;font-size:14px;font-weight:800;letter-spacing:.4px;cursor:pointer;color:#fff;text-transform:uppercase;}
+  .btn{height:50px;border:none;border-radius:13px;font-size:14px;font-weight:800;letter-spacing:.4px;cursor:pointer;color:#fff;text-transform:uppercase;touch-action:manipulation;}
   .btn:disabled{opacity:.45;cursor:default;}
   .btn.clear{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);}
   .btn.repeat{flex:1;background:rgba(232,192,96,.14);border:1px solid var(--gold);color:var(--gold-2);}
@@ -288,14 +282,31 @@
 
   // ---------- Chips ----------
   function toneClass(v){ if(v>=100)return'tone100'; if(v>=50)return'tone50'; if(v>=20)return'tone20'; if(v>=10)return'tone10'; if(v>=5)return'tone5'; if(v>=2)return'tone2'; return'tone1'; }
+  // Realistic casino chip rendered as inline SVG. SVG rasterizes crisp at any DPR/scale on iOS,
+  // unlike repeating-conic-gradient (which blurred on iPhone from the start and after a rotate).
+  const TONES={1:{e:'#9aa4b2',fl:'#ffffff',fd:'#d5dbe4',tc:'#2a2f38'},2:{e:'#c99a26',fl:'#f6d879',fd:'#e0b53f',tc:'#4a3a00'},
+    5:{e:'#9e1f2c',fl:'#e8697a',fd:'#c9283a',tc:'#ffffff'},10:{e:'#24508f',fl:'#79a8e6',fd:'#3d6fc0',tc:'#ffffff'},
+    20:{e:'#1f7a44',fl:'#69c78c',fd:'#2f9e5a',tc:'#ffffff'},50:{e:'#a8551a',fl:'#f0a866',fd:'#d97e2e',tc:'#ffffff'},
+    100:{e:'#15181e',fl:'#4a4f5a',fd:'#15181e',tc:'#f4dd9a'}};
+  function toneVal(v){ return v>=100?100:v>=50?50:v>=20?20:v>=10?10:v>=5?5:v>=2?2:1; }
+  let _cid=0;
+  function chipSVG(v,fs){ const t=TONES[toneVal(v)]; const id='cg'+(_cid++);
+    return '<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">'
+      +'<defs><radialGradient id="'+id+'" cx="42%" cy="34%" r="72%"><stop offset="0" stop-color="'+t.fl+'"/><stop offset="1" stop-color="'+t.fd+'"/></radialGradient></defs>'
+      +'<circle cx="22" cy="22" r="21" fill="'+t.e+'"/>'
+      +'<circle cx="22" cy="22" r="17.5" fill="none" stroke="#f4f6fa" stroke-width="8" stroke-dasharray="6.87 6.87"/>'
+      +'<circle cx="22" cy="22" r="21" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.5"/>'
+      +'<circle cx="22" cy="22" r="14.6" fill="url(#'+id+')"/>'
+      +'<circle cx="22" cy="22" r="14.6" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.6"/>'
+      +'<text x="22" y="23" text-anchor="middle" dominant-baseline="middle" font-family="Segoe UI,system-ui,sans-serif" font-weight="800" font-size="'+(fs||13)+'" fill="'+t.tc+'">'+v+'</text></svg>'; }
   const CHIP_VALUES=[1,2,5,10,20,50]; let curChip=5;
   const chipsEl=document.getElementById('chips');
   function buildChips(){ chipsEl.innerHTML='';
     CHIP_VALUES.forEach(v=>{ const el=document.createElement('div');
-      el.className='chip '+toneClass(v)+(v===curChip?' sel':''); el.dataset.v=v; el.innerHTML=`<span class="face">${v}</span>`;
+      el.className='chip'+(v===curChip?' sel':''); el.dataset.v=v; el.innerHTML=chipSVG(v,13);
       el.addEventListener('click',()=>{ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); curChip=v; document.getElementById('curChip').textContent='$'+v; });
       chipsEl.appendChild(el); });
-    void chipsEl.offsetHeight; } // force reflow so the conic-gradient re-rasterizes crisp after a rotate
+    void chipsEl.offsetHeight; }
   buildChips();
 
   // ---------- Numbers into board ----------
@@ -348,10 +359,10 @@
   function placeStakeTag(el,amt){
     if(el.classList.contains('hot')){ let tag=el._tag;
       if(!tag){ tag=document.createElement('div'); tag.className='stake'; tag.style.transform='translate(-50%,-50%)'; board.appendChild(tag); el._tag=tag; }
-      tag.className='stake '+toneClass(amt); tag.style.left=el.style.left; tag.style.top=el.style.top; tag.innerHTML=`<span class="f">${amt}</span>`;
+      tag.className='stake'; tag.style.left=el.style.left; tag.style.top=el.style.top; tag.innerHTML=chipSVG(amt,15);
     } else { let tag=el.querySelector(':scope > .stake');
       if(!tag){ tag=document.createElement('div'); tag.className='stake'; el.appendChild(tag); }
-      tag.className='stake '+toneClass(amt); tag.innerHTML=`<span class="f">${amt}</span>`; }
+      tag.className='stake'; tag.innerHTML=chipSVG(amt,15); }
   }
   function addBet(el, amount){
     if(spinning) return false;
@@ -399,6 +410,10 @@
     resetDrag();
   });
   felt.addEventListener('pointercancel', resetDrag);
+  // Kill iOS double-tap-to-zoom inside the betting area WITHOUT blocking fast chip placement:
+  // bets are placed on pointerup (fires before touchend), so preventing the zoom here is safe.
+  let _lastTap=0;
+  felt.addEventListener('touchend', e=>{ const now=Date.now(); if(now-_lastTap<=350){ e.preventDefault(); } _lastTap=now; }, {passive:false});
 
   document.getElementById('btnClear').addEventListener('click',()=>{ if(spinning) return; stopTimer(); clearBets(); });
   const btnRepeat=document.getElementById('btnRepeat');
@@ -500,10 +515,18 @@
     if(p&&p.then){ p.then(()=>{}).catch(()=>{ document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }); }
     else { document.addEventListener('pointerdown',onFirstGesture,true); document.addEventListener('touchstart',onFirstGesture,true); }
   })();
-  let esVoice=null;
+  let esVoice=null, speechReady=false;
+  const hasTTS='speechSynthesis' in window;
   function pickVoice(){ const vs=speechSynthesis.getVoices(); esVoice = vs.find(v=>/^es(-|_)?/i.test(v.lang)) || vs.find(v=>/es/i.test(v.lang)) || null; }
-  if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-  function say(text,cb){ try{ const u=new SpeechSynthesisUtterance(text); u.lang='es-ES'; u.rate=.98; if(esVoice) u.voice=esVoice; if(cb) u.onend=cb; speechSynthesis.speak(u); }catch(e){ if(cb) cb(); } }
+  if(hasTTS){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+  // iOS Safari blocks speech unless it was first "primed" during a user gesture. Music played fine,
+  // but the spoken result did not, because the win/lose line fires from an async callback (no gesture).
+  // Prime with a silent utterance on the player's first touch anywhere so later speech is allowed.
+  function primeSpeech(){ if(speechReady||!hasTTS) return; try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); speechReady=true; }catch(e){} }
+  document.addEventListener('pointerdown',primeSpeech,true);
+  document.addEventListener('touchstart',primeSpeech,true);
+  function say(text,cb){ if(!hasTTS){ if(cb) cb(); return; }
+    try{ speechSynthesis.resume(); const u=new SpeechSynthesisUtterance(text); u.lang='es-ES'; u.rate=.98; if(esVoice) u.voice=esVoice; if(cb) u.onend=cb; speechSynthesis.speak(u); }catch(e){ if(cb) cb(); } }
   function announce(n,col,win){ say(n===0?'Cero, verde':(n+', '+col), ()=>{ if(win>0) say('¡Ganaste! '+Math.round(win)+' pesos'); else say('No hubo suerte. Va la próxima'); }); }
   function colorName(n){ return n===0?'verde':(reds.has(n)?'rojo':'negro'); }
 
